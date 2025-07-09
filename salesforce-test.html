@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salesforce Customer Lookup Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .nav-links {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+        .nav-links a {
+            color: #007bff;
+            text-decoration: none;
+            margin-left: 15px;
+        }
+        .step {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+        }
+        .step h3 {
+            margin-top: 0;
+            color: #007bff;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="url"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .search-section {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #28a745;
+            border-radius: 5px;
+            background-color: #d4edda;
+        }
+        .results {
+            margin-top: 20px;
+        }
+        .customer-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            background-color: white;
+        }
+        .customer-card h4 {
+            margin: 0 0 10px 0;
+            color: #007bff;
+        }
+        .error {
+            color: #dc3545;
+            background-color: #f8d7da;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .success {
+            color: #155724;
+            background-color: #d4edda;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .code-block {
+            background-color: #f1f1f1;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            margin-top: 10px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-links">
+            <a href="index.html">← Back to Form</a>
+            <a href="admin.html">Admin Console</a>
+        </div>
+        
+        <div class="header">
+            <h1>Salesforce Customer Lookup Test</h1>
+            <p>Test read-only integration with your Salesforce org</p>
+        </div>
+
+        <!-- Step 1: Configuration -->
+        <div class="step">
+            <h3>Step 1: Configure Salesforce Connection</h3>
+            <div class="form-group">
+                <label for="salesforceUrl">Your Salesforce URL:</label>
+                <input type="url" id="salesforceUrl" placeholder="https://yourcompany.my.salesforce.com" value="">
+            </div>
+            <div class="form-group">
+                <label for="consumerKey">Consumer Key (from Connected App):</label>
+                <input type="text" id="consumerKey" placeholder="Paste your Consumer Key here">
+            </div>
+            <button class="btn" onclick="authenticateWithSalesforce()">Connect to Salesforce</button>
+            <div id="authResult"></div>
+        </div>
+
+        <!-- Step 2: Customer Search -->
+        <div class="step search-section hidden" id="searchSection">
+            <h3>Step 2: Search Customers</h3>
+            <div class="form-group">
+                <label for="searchTerm">Search for a customer:</label>
+                <input type="text" id="searchTerm" placeholder="Enter company name or partial name">
+            </div>
+            <button class="btn" onclick="searchCustomers()">Search Salesforce Accounts</button>
+            <div id="searchResults" class="results"></div>
+        </div>
+
+        <!-- Step 3: Test Results -->
+        <div class="step hidden" id="resultsSection">
+            <h3>Step 3: Integration Test Results</h3>
+            <div id="testResults"></div>
+        </div>
+    </div>
+
+    <script>
+        let accessToken = null;
+        let instanceUrl = null;
+
+        // Salesforce authentication
+        function authenticateWithSalesforce() {
+            const salesforceUrl = document.getElementById('salesforceUrl').value;
+            const consumerKey = document.getElementById('consumerKey').value;
+            
+            if (!salesforceUrl || !consumerKey) {
+                showMessage('authResult', 'Please fill in both Salesforce URL and Consumer Key', 'error');
+                return;
+            }
+
+            // Clean up the URL
+            const baseUrl = salesforceUrl.replace(/\/$/, '');
+            
+            // For read-only testing, we'll use the OAuth web server flow
+            const redirectUri = encodeURIComponent('https://psanderssilverchai.github.io/s1m-customer-requirements-form/auth/callback');
+            const scope = encodeURIComponent('api id');
+            
+            const authUrl = `${baseUrl}/services/oauth2/authorize?` +
+                `response_type=code&` +
+                `client_id=${encodeURIComponent(consumerKey)}&` +
+                `redirect_uri=${redirectUri}&` +
+                `scope=${scope}&` +
+                `state=test`;
+
+            showMessage('authResult', 'Redirecting to Salesforce for authentication...', 'success');
+            
+            // Store config for after redirect
+            localStorage.setItem('sf_config', JSON.stringify({
+                salesforceUrl: baseUrl,
+                consumerKey: consumerKey
+            }));
+
+            // Redirect to Salesforce for authentication
+            window.location.href = authUrl;
+        }
+
+        // Handle OAuth callback (if we're on the callback page)
+        function handleOAuthCallback() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const state = urlParams.get('state');
+            
+            if (code && state === 'test') {
+                // We have an authorization code, but for security reasons,
+                // we can't exchange it for an access token client-side in production
+                showMessage('authResult', 'Authentication successful! In a production environment, this would be handled by a secure backend.', 'success');
+                
+                // For testing purposes, show what would happen next
+                document.getElementById('searchSection').classList.remove('hidden');
+                
+                // Simulate successful authentication for demo
+                simulateSuccessfulAuth();
+            }
+        }
+
+        // Simulate successful authentication for testing purposes
+        function simulateSuccessfulAuth() {
+            // In a real implementation, you would:
+            // 1. Exchange the authorization code for an access token (server-side)
+            // 2. Store the access token securely
+            // 3. Use the access token for API calls
+            
+            accessToken = 'DEMO_TOKEN'; // This would be your real access token
+            instanceUrl = document.getElementById('salesforceUrl').value;
+            
+            showMessage('authResult', 'Demo Mode: Authentication simulated successfully!', 'success');
+            document.getElementById('searchSection').classList.remove('hidden');
+        }
+
+        // Search customers in Salesforce
+        async function searchCustomers() {
+            const searchTerm = document.getElementById('searchTerm').value;
+            
+            if (!searchTerm) {
+                showMessage('searchResults', 'Please enter a search term', 'error');
+                return;
+            }
+
+            if (!accessToken) {
+                showMessage('searchResults', 'Please authenticate with Salesforce first', 'error');
+                return;
+            }
+
+            showMessage('searchResults', 'Searching Salesforce...', 'success');
+
+            // In a real implementation, this would be a call to your Salesforce org
+            // For demo purposes, we'll simulate the API call
+            simulateCustomerSearch(searchTerm);
+        }
+
+        // Simulate Salesforce API call (for demo purposes)
+        function simulateCustomerSearch(searchTerm) {
+            // This simulates what a real Salesforce API response would look like
+            const mockResults = [
+                {
+                    Id: '0011234567890ABC',
+                    Name: 'Acme Corporation',
+                    Type: 'Customer',
+                    Phone: '(555) 123-4567',
+                    Website: 'www.acme.com',
+                    BillingCity: 'New York',
+                    BillingState: 'NY'
+                },
+                {
+                    Id: '0011234567890DEF',
+                    Name: 'Global Publishing Inc',
+                    Type: 'Prospect',
+                    Phone: '(555) 987-6543',
+                    Website: 'www.globalpub.com',
+                    BillingCity: 'Boston',
+                    BillingState: 'MA'
+                }
+            ];
+
+            // Filter results based on search term
+            const filteredResults = mockResults.filter(account => 
+                account.Name.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+            displaySearchResults(filteredResults);
+            document.getElementById('resultsSection').classList.remove('hidden');
+            
+            // Show what the actual API call would look like
+            showAPIExample(searchTerm);
+        }
+
+        // Display search results
+        function displaySearchResults(results) {
+            const resultsDiv = document.getElementById('searchResults');
+            
+            if (results.length === 0) {
+                resultsDiv.innerHTML = '<div class="error">No customers found matching your search term.</div>';
+                return;
+            }
+
+            let html = `<h4>Found ${results.length} customer(s):</h4>`;
+            
+            results.forEach(customer => {
+                html += `
+                    <div class="customer-card">
+                        <h4>${customer.Name}</h4>
+                        <p><strong>Type:</strong> ${customer.Type}</p>
+                        <p><strong>Phone:</strong> ${customer.Phone || 'Not provided'}</p>
+                        <p><strong>Website:</strong> ${customer.Website || 'Not provided'}</p>
+                        <p><strong>Location:</strong> ${customer.BillingCity}, ${customer.BillingState}</p>
+                        <p><strong>Salesforce ID:</strong> ${customer.Id}</p>
+                        <button class="btn" onclick="selectCustomer('${customer.Id}', '${customer.Name}')">
+                            Use This Customer
+                        </button>
+                    </div>
+                `;
+            });
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        // Show what the actual API call would look like
+        function showAPIExample(searchTerm) {
+            const apiExample = `
+Real Salesforce API Call would be:
+
+GET ${instanceUrl}/services/data/v58.0/search/?q=FIND {${searchTerm}} IN NAME FIELDS RETURNING Account(Id, Name, Type, Phone, Website, BillingCity, BillingState)
+
+Headers:
+Authorization: Bearer ${accessToken}
+Content-Type: application/json
+
+This would return actual customer data from your Salesforce org.
+            `;
+            
+            document.getElementById('testResults').innerHTML = 
+                '<h4>API Call Example:</h4>' +
+                '<div class="code-block">' + apiExample + '</div>';
+        }
+
+        // Select a customer (for integration with main form)
+        function selectCustomer(customerId, customerName) {
+            showMessage('testResults', 
+                `Selected customer: ${customerName} (ID: ${customerId})\n\n` +
+                'In the full integration, this would:\n' +
+                '• Pre-populate the form with customer data\n' +
+                '• Link the submission to the Salesforce Account\n' +
+                '• Enable automatic updates back to Salesforce', 
+                'success');
+                
+            // Store selected customer for potential use in main form
+            localStorage.setItem('selectedCustomer', JSON.stringify({
+                id: customerId,
+                name: customerName
+            }));
+        }
+
+        // Utility function to show messages
+        function showMessage(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="${type}">${message}</div>`;
+        }
+
+        // Initialize the page
+        function init() {
+            // Check if we're returning from OAuth
+            handleOAuthCallback();
+            
+            // Load saved config
+            const savedConfig = localStorage.getItem('sf_config');
+            if (savedConfig) {
+                const config = JSON.parse(savedConfig);
+                document.getElementById('salesforceUrl').value = config.salesforceUrl;
+                document.getElementById('consumerKey').value = config.consumerKey;
+            }
+        }
+
+        // Initialize when page loads
+        init();
+    </script>
+</body>
+</html>
