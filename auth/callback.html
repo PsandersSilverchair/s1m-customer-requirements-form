@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salesforce Authentication Callback</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .success {
+            color: #28a745;
+            background-color: #d4edda;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .error {
+            color: #dc3545;
+            background-color: #f8d7da;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .loading {
+            color: #007bff;
+            background-color: #cce5ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Salesforce Authentication</h1>
+        <div id="status" class="loading">Processing authentication...</div>
+        <div id="actions" style="display: none;">
+            <a href="../salesforce-test.html" class="btn">Continue Testing</a>
+            <a href="../index.html" class="btn">Back to Form</a>
+        </div>
+    </div>
+
+    <script>
+        function handleCallback() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const error = urlParams.get('error');
+            const state = urlParams.get('state');
+            
+            const statusDiv = document.getElementById('status');
+            const actionsDiv = document.getElementById('actions');
+            
+            if (error) {
+                statusDiv.className = 'error';
+                statusDiv.innerHTML = `
+                    <h3>Authentication Error</h3>
+                    <p><strong>Error:</strong> ${error}</p>
+                    <p><strong>Description:</strong> ${urlParams.get('error_description') || 'Unknown error'}</p>
+                `;
+                actionsDiv.style.display = 'block';
+                return;
+            }
+            
+            if (code && state === 'test') {
+                statusDiv.className = 'success';
+                statusDiv.innerHTML = `
+                    <h3>Authentication Successful!</h3>
+                    <p>Authorization code received. In a production environment, this would be exchanged for an access token on the server.</p>
+                    <p><strong>Next steps:</strong> You can now return to the test page to simulate customer searches.</p>
+                `;
+                
+                // Store the authorization code for the test page
+                localStorage.setItem('sf_auth_code', code);
+                localStorage.setItem('sf_auth_success', 'true');
+                
+                actionsDiv.style.display = 'block';
+                
+                // Redirect back to test page after 3 seconds
+                setTimeout(() => {
+                    window.location.href = '../salesforce-test.html';
+                }, 3000);
+                
+            } else {
+                statusDiv.className = 'error';
+                statusDiv.innerHTML = `
+                    <h3>Invalid Response</h3>
+                    <p>The authentication response was invalid or incomplete.</p>
+                `;
+                actionsDiv.style.display = 'block';
+            }
+        }
+        
+        // Handle the callback when page loads
+        handleCallback();
+    </script>
+</body>
+</html>

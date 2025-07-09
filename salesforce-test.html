@@ -170,8 +170,41 @@
         let accessToken = null;
         let instanceUrl = null;
 
+        // Generate PKCE challenge
+        function generatePKCE() {
+            const codeVerifier = generateCodeVerifier();
+            const codeChallenge = generateCodeChallenge(codeVerifier);
+            
+            localStorage.setItem('pkce_code_verifier', codeVerifier);
+            
+            return {
+                codeVerifier: codeVerifier,
+                codeChallenge: codeChallenge
+            };
+        }
+
+        function generateCodeVerifier() {
+            const array = new Uint8Array(32);
+            crypto.getRandomValues(array);
+            return btoa(String.fromCharCode.apply(null, array))
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=/g, '');
+        }
+
+        function generateCodeChallenge(codeVerifier) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(codeVerifier);
+            return crypto.subtle.digest('SHA-256', data).then(hash => {
+                return btoa(String.fromCharCode.apply(null, new Uint8Array(hash)))
+                    .replace(/\+/g, '-')
+                    .replace(/\//g, '_')
+                    .replace(/=/g, '');
+            });
+        }
+
         // Salesforce authentication
-        function authenticateWithSalesforce() {
+        async function authenticateWithSalesforce() {
             const salesforceUrl = document.getElementById('salesforceUrl').value;
             const consumerKey = document.getElementById('consumerKey').value;
             
@@ -183,8 +216,12 @@
             // Clean up the URL
             const baseUrl = salesforceUrl.replace(/\/$/, '');
             
-            // For read-only testing, we'll use the OAuth web server flow
-            const redirectUri = encodeURIComponent('https://psanderssilverchai.github.io/s1m-customer-requirements-form/auth/callback');
+            // Generate PKCE challenge
+            const pkce = generatePKCE();
+            const codeChallenge = await pkce.codeChallenge;
+            
+            // Use the correct callback URL with proper case
+            const redirectUri = encodeURIComponent('https://PsandersSilverchair.github.io/s1m-customer-requirements-form/auth/callback');
             const scope = encodeURIComponent('api id');
             
             const authUrl = `${baseUrl}/services/oauth2/authorize?` +
@@ -192,6 +229,8 @@
                 `client_id=${encodeURIComponent(consumerKey)}&` +
                 `redirect_uri=${redirectUri}&` +
                 `scope=${scope}&` +
+                `code_challenge=${codeChallenge}&` +
+                `code_challenge_method=S256&` +
                 `state=test`;
 
             showMessage('authResult', 'Redirecting to Salesforce for authentication...', 'success');
@@ -371,7 +410,23 @@ This would return actual customer data from your Salesforce org.
         // Initialize the page
         function init() {
             // Check if we're returning from OAuth
-            handleOAuthCallback();
+            const authSuccess = localStorage.getItem('sf_auth_success');
+            if (authSuccess === 'true') {
+                // Clear the flag
+                localStorage.removeItem('sf_auth_success');
+                
+                // Show success message and enable search
+                showMessage('authResult', 'Authentication successful! You can now search for customers.', 'success');
+                document.getElementById('searchSection').classList.remove('hidden');
+                
+                // Set up demo mode
+                accessToken = 'DEMO_TOKEN';
+                const savedConfig = localStorage.getItem('sf_config');
+                if (savedConfig) {
+                    const config = JSON.parse(savedConfig);
+                    instanceUrl = config.salesforceUrl;
+                }
+            }
             
             // Load saved config
             const savedConfig = localStorage.getItem('sf_config');
