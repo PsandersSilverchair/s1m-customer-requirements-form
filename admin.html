@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S1M Requirements Admin Console</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px;
+            margin: -20px -20px 20px -20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            margin: 0;
+        }
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            background-color: rgba(255,255,255,0.2);
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .nav-link:hover {
+            background-color: rgba(255,255,255,0.3);
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .table-container {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #495057;
+        }
+        tr:hover {
+            background-color: #f8f9fa;
+            cursor: pointer;
+        }
+        .status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status.new {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status.reviewed {
+            background-color: #cce5ff;
+            color: #004085;
+        }
+        .status.approved {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        .no-submissions {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+        .no-submissions h3 {
+            margin-bottom: 10px;
+        }
+        
+        /* Lightbox Styles */
+        .lightbox {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .lightbox-content {
+            position: relative;
+            background-color: white;
+            margin: 2% auto;
+            padding: 0;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .lightbox-header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .lightbox-header h2 {
+            margin: 0;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .close-btn:hover {
+            background-color: rgba(255,255,255,0.2);
+            border-radius: 50%;
+        }
+        .lightbox-body {
+            padding: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        .lightbox-footer {
+            padding: 20px;
+            border-top: 1px solid #ddd;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .form-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .form-section h3 {
+            margin-top: 0;
+            color: #007bff;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .form-group textarea {
+            height: 80px;
+            resize: vertical;
+        }
+        .manuscript-types, .additional-questions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .manuscript-types input, .additional-questions input {
+            width: 100%;
+        }
+        .questions-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .questions-table th {
+            background-color: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+            font-weight: bold;
+        }
+        .questions-table th:last-child {
+            text-align: center;
+            width: 100px;
+        }
+        .questions-table td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            vertical-align: top;
+        }
+        .questions-table td:last-child {
+            text-align: center;
+            vertical-align: middle;
+        }
+        .questions-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .questions-table input[type="checkbox"] {
+            width: auto;
+            transform: scale(1.2);
+        }
+        .unsaved-changes {
+            color: #dc3545;
+            font-style: italic;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>S1M Requirements Admin Console</h1>
+        <div>
+            <button onclick="refreshData()" style="margin-right: 10px; padding: 5px 10px; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 3px; cursor: pointer;">Refresh</button>
+            <button onclick="debugLocalStorage()" style="margin-right: 10px; padding: 5px 10px; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 3px; cursor: pointer;">Debug</button>
+            <button onclick="clearLocalStorage()" style="margin-right: 10px; padding: 5px 10px; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 3px; cursor: pointer;">Clear Data</button>
+            <a href="index.html" class="nav-link">← Back to Form</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="table-container">
+            <table id="submissionsTable">
+                <thead>
+                    <tr>
+                        <th>Journal Name</th>
+                        <th>Workflow</th>
+                        <th>Review Process</th>
+                        <th>URL Suffix</th>
+                        <th>Submitted</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="submissionsTableBody">
+                    <!-- Submissions will be populated here -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="no-submissions" id="noSubmissions">
+            <h3>No Submissions Found</h3>
+            <p>No customer requirements have been submitted yet.</p>
+            <p><a href="index.html">Go to the form</a> to create your first submission.</p>
+        </div>
+    </div>
+
+    <!-- Lightbox for editing submissions -->
+    <div id="editLightbox" class="lightbox">
+        <div class="lightbox-content">
+            <div class="lightbox-header">
+                <h2>Edit Submission <span class="unsaved-changes" id="unsavedIndicator" style="display: none;">• Unsaved Changes</span></h2>
+                <button class="close-btn" onclick="closeLightbox()">&times;</button>
+            </div>
+            <div class="lightbox-body">
+                <form id="editForm">
+                    <div class="form-section">
+                        <h3>Journal Information</h3>
+                        <div class="form-group">
+                            <label for="editJournalName">Journal Name:</label>
+                            <input type="text" id="editJournalName" name="journalName">
+                        </div>
+                        <div class="form-group">
+                            <label for="editUrlSuffix">URL Suffix:</label>
+                            <input type="text" id="editUrlSuffix" name="urlSuffix" maxlength="18">
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Editorial Process</h3>
+                        <div class="form-group">
+                            <label for="editWorkflow">Workflow:</label>
+                            <select id="editWorkflow" name="workflow">
+                                <option value="option1">Option 1 – One Level of Editor</option>
+                                <option value="option2">Option 2 – Two Levels of Editor, First Editor Makes Final Decision</option>
+                                <option value="option3">Option 3 – Two Levels of Editor, Second Editor Makes Final Decision</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="editPeerReview">Peer Review Process:</label>
+                            <select id="editPeerReview" name="peerReview">
+                                <option value="single">Single</option>
+                                <option value="double">Double</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="editDefaultRole">Default Role:</label>
+                            <select id="editDefaultRole" name="defaultRole">
+                                <option value="author">Author</option>
+                                <option value="author-reviewer">Author and Reviewer</option>
+                                <option value="reviewer">Reviewer</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Manuscript Types</h3>
+                        <div class="manuscript-types" id="editManuscriptTypes">
+                            <!-- Manuscript types will be populated here -->
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Standard Questions</h3>
+                        <div id="editStandardQuestions">
+                            <!-- Standard questions will be populated here -->
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Additional Questions</h3>
+                        <div class="additional-questions" id="editAdditionalQuestions">
+                            <!-- Additional questions will be populated here -->
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Additional Information</h3>
+                        <div class="form-group">
+                            <label for="editAdditionalInfo">Additional Information:</label>
+                            <textarea id="editAdditionalInfo" name="additionalInfo"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="lightbox-footer">
+                <button class="btn btn-secondary" onclick="closeLightbox()">Close</button>
+                <button class="btn btn-primary" onclick="saveSubmission()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data for demonstration
+        let submissions = [];
+        let currentEditingSubmission = null;
+        let hasUnsavedChanges = false;
+
+        // Initialize the admin console
+        function init() {
+            loadSubmissions();
+            renderSubmissions();
+            setupFormChangeDetection();
+        }
+
+        // Load submissions from localStorage
+        function loadSubmissions() {
+            const saved = localStorage.getItem('s1m_submissions');
+            console.log('Loading submissions from localStorage:', saved);
+            if (saved) {
+                try {
+                    submissions = JSON.parse(saved);
+                    console.log('Parsed submissions:', submissions);
+                } catch (e) {
+                    console.error('Error parsing submissions:', e);
+                    submissions = [];
+                }
+            } else {
+                console.log('No submissions found in localStorage');
+                submissions = [];
+            }
+        }
+
+        // Save submissions to localStorage
+        function saveSubmissions() {
+            localStorage.setItem('s1m_submissions', JSON.stringify(submissions));
+        }
+
+        // Render submissions table
+        function renderSubmissions() {
+            const tbody = document.getElementById('submissionsTableBody');
+            const noSubmissions = document.getElementById('noSubmissions');
+            
+            if (submissions.length === 0) {
+                tbody.innerHTML = '';
+                noSubmissions.style.display = 'block';
+                return;
+            }
+
+            noSubmissions.style.display = 'none';
+            
+            tbody.innerHTML = submissions.map((submission, index) => {
+                const workflowText = getWorkflowText(submission.workflow);
+                const reviewText = submission.peerReview === 'single' ? 'Single' : 'Double';
+                const submittedDate = new Date(submission.submittedAt || Date.now()).toLocaleDateString();
+                
+                return `
+                    <tr onclick="openEditLightbox(${index})">
+                        <td>${submission.journalName || 'Untitled Journal'}</td>
+                        <td>${workflowText}</td>
+                        <td>${reviewText}</td>
+                        <td>${submission.urlSuffix || 'N/A'}</td>
+                        <td>${submittedDate}</td>
+                        <td><span class="status new">New</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Get readable workflow text
+        function getWorkflowText(workflow) {
+            switch(workflow) {
+                case 'option1': return 'One Level of Editor';
+                case 'option2': return 'Two Levels (First Decides)';
+                case 'option3': return 'Two Levels (Second Decides)';
+                default: return 'Unknown';
+            }
+        }
+
+        // Open edit lightbox
+        function openEditLightbox(index) {
+            currentEditingSubmission = index;
+            const submission = submissions[index];
+            
+            // Populate form fields
+            document.getElementById('editJournalName').value = submission.journalName || '';
+            document.getElementById('editUrlSuffix').value = submission.urlSuffix || '';
+            document.getElementById('editWorkflow').value = submission.workflow || 'option1';
+            document.getElementById('editPeerReview').value = submission.peerReview || 'single';
+            document.getElementById('editDefaultRole').value = submission.defaultRole || 'author';
+            document.getElementById('editAdditionalInfo').value = submission.additionalInfo || '';
+            
+            // Populate manuscript types
+            populateManuscriptTypes(submission.manuscriptTypes || []);
+            
+            // Populate standard questions
+            populateStandardQuestions(submission);
+            
+            // Populate additional questions
+            populateAdditionalQuestions(submission.additionalQuestions || []);
+            
+            // Show lightbox
+            document.getElementById('editLightbox').style.display = 'block';
+            resetUnsavedChanges();
+        }
+
+        // Close lightbox
+        function closeLightbox() {
+            if (hasUnsavedChanges) {
+                if (!confirm('You have unsaved changes. Are you sure you want to close without saving?')) {
+                    return;
+                }
+            }
+            
+            document.getElementById('editLightbox').style.display = 'none';
+            currentEditingSubmission = null;
+            resetUnsavedChanges();
+        }
+
+        // Populate manuscript types
+        function populateManuscriptTypes(types) {
+            const container = document.getElementById('editManuscriptTypes');
+            container.innerHTML = types.map((type, index) => 
+                `<input type="text" value="${type}" data-index="${index}" class="manuscript-type-input">`
+            ).join('');
+        }
+
+        // Populate standard questions
+        function populateStandardQuestions(submission) {
+            const container = document.getElementById('editStandardQuestions');
+            const questions = [
+                { key: 'numFigures', label: 'Number of Figures' },
+                { key: 'numTables', label: 'Number of Tables' },
+                { key: 'numColorFigures', label: 'Number of Color Figures' },
+                { key: 'numWords', label: 'Number of Words' },
+                { key: 'prevSubmission', label: 'Has this manuscript been submitted previously to this journal' },
+                { key: 'journalCovers', label: 'Are any of the included images potential journal covers' },
+                { key: 'colorFee', label: 'Are you willing to pay the journal\'s fee for color reproduction?' },
+                { key: 'soleSubmission', label: 'Confirm that the manuscript has been submitted solely to this journal and is not published, in press, or submitted elsewhere.' },
+                { key: 'ethicalGuidelines', label: 'Confirm that all the research meets the ethical guidelines, including adherence to the legal requirements of the study country.' },
+                { key: 'conflictInterest', label: 'Do you have any conflict of interest?' },
+                { key: 'anonymizedReview', label: 'Confirm that you have prepared a complete text minus the title page, acknowledgments, and any running headers with author names, to allow anonymized review.' },
+                { key: 'researchFunding', label: 'Do you wish to include the ability to collect research funding information for manuscripts?' }
+            ];
+
+            container.innerHTML = `
+                <table class="questions-table">
+                    <thead>
+                        <tr>
+                            <th>Question</th>
+                            <th>Include?</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${questions.map(q => `
+                            <tr>
+                                <td>${q.label}</td>
+                                <td><input type="checkbox" name="${q.key}" value="yes" ${submission[q.key] === 'yes' ? 'checked' : ''}></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Populate additional questions
+        function populateAdditionalQuestions(questions) {
+            const container = document.getElementById('editAdditionalQuestions');
+            container.innerHTML = questions.map((question, index) => 
+                `<input type="text" value="${question}" data-index="${index}" class="additional-question-input">`
+            ).join('');
+        }
+
+        // Save submission
+        function saveSubmission() {
+            if (currentEditingSubmission === null) return;
+            
+            const formData = new FormData(document.getElementById('editForm'));
+            const submission = submissions[currentEditingSubmission];
+            
+            // Update basic fields
+            submission.journalName = formData.get('journalName');
+            submission.urlSuffix = formData.get('urlSuffix');
+            submission.workflow = formData.get('workflow');
+            submission.peerReview = formData.get('peerReview');
+            submission.defaultRole = formData.get('defaultRole');
+            submission.additionalInfo = formData.get('additionalInfo');
+            
+            // Update manuscript types
+            const manuscriptInputs = document.querySelectorAll('.manuscript-type-input');
+            submission.manuscriptTypes = Array.from(manuscriptInputs)
+                .map(input => input.value.trim())
+                .filter(value => value);
+            
+            // Update standard questions (handle checkboxes)
+            const standardQuestions = [
+                'numFigures', 'numTables', 'numColorFigures', 'numWords',
+                'prevSubmission', 'journalCovers', 'colorFee', 'soleSubmission',
+                'ethicalGuidelines', 'conflictInterest', 'anonymizedReview', 'researchFunding'
+            ];
+            
+            standardQuestions.forEach(key => {
+                submission[key] = formData.get(key) ? 'yes' : 'no';
+            });
+            
+            // Update additional questions
+            const additionalInputs = document.querySelectorAll('.additional-question-input');
+            submission.additionalQuestions = Array.from(additionalInputs)
+                .map(input => input.value.trim())
+                .filter(value => value);
+            
+            // Save to localStorage
+            saveSubmissions();
+            
+            // Update table display
+            renderSubmissions();
+            
+            // Close lightbox
+            closeLightbox();
+            
+            alert('Submission updated successfully!');
+        }
+
+        // Setup form change detection
+        function setupFormChangeDetection() {
+            document.addEventListener('input', function(e) {
+                if (e.target.closest('#editForm')) {
+                    markUnsavedChanges();
+                }
+            });
+        }
+
+        // Mark unsaved changes
+        function markUnsavedChanges() {
+            hasUnsavedChanges = true;
+            document.getElementById('unsavedIndicator').style.display = 'inline';
+        }
+
+        // Reset unsaved changes
+        function resetUnsavedChanges() {
+            hasUnsavedChanges = false;
+            document.getElementById('unsavedIndicator').style.display = 'none';
+        }
+
+        // Handle clicks outside lightbox
+        window.onclick = function(event) {
+            const lightbox = document.getElementById('editLightbox');
+            if (event.target === lightbox) {
+                closeLightbox();
+            }
+        }
+
+        // Debug functions
+        function debugLocalStorage() {
+            console.log('=== LocalStorage Debug ===');
+            const saved = localStorage.getItem('s1m_submissions');
+            console.log('Raw localStorage data:', saved);
+            
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    console.log('Parsed data:', parsed);
+                    console.log('Number of submissions:', parsed.length);
+                    parsed.forEach((submission, index) => {
+                        console.log(`Submission ${index}:`, submission);
+                    });
+                } catch (e) {
+                    console.error('Error parsing data:', e);
+                }
+            } else {
+                console.log('No data found in localStorage');
+            }
+            
+            console.log('Current submissions array:', submissions);
+            alert('Debug info logged to console. Check browser developer tools.');
+        }
+        
+        function clearLocalStorage() {
+            if (confirm('Are you sure you want to clear all submissions?')) {
+                localStorage.removeItem('s1m_submissions');
+                submissions = [];
+                renderSubmissions();
+                alert('All submissions cleared!');
+            }
+        }
+        
+        function refreshData() {
+            loadSubmissions();
+            renderSubmissions();
+        }
+
+        // Initialize on page load
+        init();
+    </script>
+</body>
+</html>

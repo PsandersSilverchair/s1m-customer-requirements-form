@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S1M Customer Requirements Document</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 25px;
+            padding: 20px;
+            border-left: 4px solid #007bff;
+            background-color: #f8f9fa;
+        }
+        .section h2 {
+            color: #007bff;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        .required {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="url"], select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        select {
+            height: 36px;
+        }
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        .workflow-options {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .workflow-option {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+        }
+        .workflow-option h4 {
+            margin-top: 0;
+            color: #007bff;
+        }
+        .workflow-option ul {
+            margin: 10px 0;
+        }
+        .manuscript-types {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .manuscript-type-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .manuscript-type-input {
+            flex: 1;
+        }
+        .remove-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            min-width: 70px;
+        }
+        .remove-btn:hover {
+            background-color: #c82333;
+        }
+        .add-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .add-btn:hover {
+            background-color: #218838;
+        }
+        .questions-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .questions-table th {
+            background-color: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+            font-weight: bold;
+        }
+        .questions-table th:last-child {
+            text-align: center;
+            width: 100px;
+        }
+        .questions-table td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            vertical-align: top;
+        }
+        .questions-table td:last-child {
+            text-align: center;
+            vertical-align: middle;
+        }
+        .questions-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .questions-table input[type="checkbox"] {
+            width: auto;
+            transform: scale(1.2);
+        }
+        .additional-questions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .additional-question-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .additional-question-input {
+            flex: 1;
+        }
+        .char-limit {
+            color: #666;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        .submit-btn {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            display: block;
+            margin: 30px auto 0;
+        }
+        .submit-btn:hover {
+            background-color: #0056b3;
+        }
+        .note {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            color: #856404;
+        }
+        .validation-message {
+            margin-top: 5px;
+            font-size: 12px;
+            font-weight: bold;
+            min-height: 16px;
+        }
+        .validation-message.error {
+            color: #dc3545;
+        }
+        .validation-message.success {
+            color: #28a745;
+        }
+        .validation-message.warning {
+            color: #ffc107;
+        }
+        .input-error {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+        .input-success {
+            border-color: #28a745 !important;
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+        }
+        .input-warning {
+            border-color: #ffc107 !important;
+            box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="text-align: right; margin-bottom: 20px;">
+            <a href="admin.html" style="color: #007bff; text-decoration: none; font-weight: bold;">→ View Admin Console</a>
+        </div>
+        <h1>S1M Customer Requirements Document</h1>
+        
+        <div class="note">
+            <strong>Note:</strong> Fields marked with <span class="required">*</span> are required.
+        </div>
+        
+        <form id="requirementsForm">
+            <!-- Section 1: Journal Information -->
+            <div class="section">
+                <h2>Journal Information</h2>
+                <div class="form-group">
+                    <label for="journalName">Official Journal Name: <span class="required">*</span></label>
+                    <input type="text" id="journalName" name="journalName" required>
+                </div>
+            </div>
+
+            <!-- Section 2: URL Configuration -->
+            <div class="section">
+                <h2>URL Configuration</h2>
+                <div class="note">
+                    Please carefully consider your choices as these options will be the basis for your site.
+                </div>
+                <div class="form-group">
+                    <label for="urlSuffix">Please specify your desired URL suffix (18 characters max, no symbols or special characters): <span class="required">*</span></label>
+                    <input type="text" id="urlSuffix" name="urlSuffix" maxlength="18" pattern="[a-zA-Z0-9]+" required>
+                    <div class="char-limit">Example: http://mc.manuscriptcentral.com/xxxx</div>
+                    <div class="char-limit">Your site URL: http://mc04.manuscriptcentral.com/<span id="urlPreview">enter_your_suffix_here</span></div>
+                    <div id="urlValidation" class="validation-message"></div>
+                </div>
+            </div>
+
+            <!-- Section 3: Editorial Workflow -->
+            <div class="section">
+                <h2>Editorial Workflow</h2>
+                <div class="form-group">
+                    <label for="workflow">Which of the standard workflows below describes your editorial process? <span class="required">*</span></label>
+                    <select id="workflow" name="workflow" required>
+                        <option value="">Click here to choose a response</option>
+                        <option value="option1">Option 1 – One Level of Editor</option>
+                        <option value="option2">Option 2 – Two Levels of Editor, First Editor Makes Final Decision</option>
+                        <option value="option3">Option 3 – Two Levels of Editor, Second Editor Makes Final Decision</option>
+                    </select>
+                </div>
+                
+                <div class="workflow-options">
+                    <div class="workflow-option">
+                        <h4>Option 1 – One Level of Editor</h4>
+                        <ul>
+                            <li>Author Submits</li>
+                            <li>Admin Checks and Passes to EIC (Editor-in-Chief)</li>
+                            <li>EIC Invites and/or Assigns Reviewers</li>
+                            <li>Reviewers Score</li>
+                            <li>EIC Makes Final Decision</li>
+                        </ul>
+                    </div>
+                    <div class="workflow-option">
+                        <h4>Option 2 – Two Levels of Editor, First Editor Makes Final Decision</h4>
+                        <ul>
+                            <li>Author Submits</li>
+                            <li>Admin Checks and Passes to EIC (Editor-in-Chief)</li>
+                            <li>EIC Assigns to Associate Editor</li>
+                            <li>Associate Editor Invites and/or Assigns Reviewer(s)</li>
+                            <li>Reviewers Score</li>
+                            <li>Associate Editor Recommends Decision</li>
+                            <li>EIC Makes Final Decision</li>
+                        </ul>
+                    </div>
+                    <div class="workflow-option">
+                        <h4>Option 3 – Two Levels of Editor, Second Editor Makes Final Decision</h4>
+                        <ul>
+                            <li>Author Submits</li>
+                            <li>Admin Checks and Passes to EIC (Editor-in-Chief)</li>
+                            <li>EIC Assigns to Associate Editor</li>
+                            <li>Associate Editor Invites and/or Assigns Reviewer(s)</li>
+                            <li>Reviewers Score</li>
+                            <li>Associate Editor Makes Final Decision</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 4: Manuscript Types -->
+            <div class="section">
+                <h2>Manuscript Types</h2>
+                <div class="form-group">
+                    <label>List all manuscript types needed for author submission. (Example: Original Article, Review)</label>
+                    <div class="manuscript-types" id="manuscriptTypesContainer">
+                        <div class="manuscript-type-row">
+                            <input type="text" name="manuscriptType1" placeholder="1. Original Article" class="manuscript-type-input">
+                            <button type="button" class="remove-btn" onclick="removeManuscriptType(this)" style="display: none;">Remove</button>
+                        </div>
+                        <div class="manuscript-type-row">
+                            <input type="text" name="manuscriptType2" placeholder="2. Review" class="manuscript-type-input">
+                            <button type="button" class="remove-btn" onclick="removeManuscriptType(this)" style="display: none;">Remove</button>
+                        </div>
+                        <div class="manuscript-type-row">
+                            <input type="text" name="manuscriptType3" placeholder="3. Research Note" class="manuscript-type-input">
+                            <button type="button" class="remove-btn" onclick="removeManuscriptType(this)">Remove</button>
+                        </div>
+                    </div>
+                    <button type="button" class="add-btn" onclick="addManuscriptType()">Add Another Manuscript Type</button>
+                </div>
+            </div>
+
+            <!-- Section 5: Peer Review Process -->
+            <div class="section">
+                <h2>Peer Review Process</h2>
+                <div class="form-group">
+                    <label for="peerReview">Is your peer review process single or double anonymized? <span class="required">*</span></label>
+                    <select id="peerReview" name="peerReview" required>
+                        <option value="">Click here to choose a response</option>
+                        <option value="single">Single</option>
+                        <option value="double">Double</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Section 6: Standard Questions -->
+            <div class="section">
+                <h2>Standard Author Questions</h2>
+                <div class="note">
+                    The below standard author questions will be included on your site by default. However, you may check the box next to each question to indicate whether you prefer it to be on your site or not.
+                </div>
+                
+                <table class="questions-table">
+                    <thead>
+                        <tr>
+                            <th>Question</th>
+                            <th>Include?</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Number of Figures</td>
+                            <td><input type="checkbox" name="numFigures" value="yes"></td>
+                        </tr>
+                        <tr>
+                            <td>Number of Tables</td>
+                            <td><input type="checkbox" name="numTables" value="yes"></td>
+                        </tr>
+                        <tr>
+                            <td>Number of Color Figures</td>
+                            <td><input type="checkbox" name="numColorFigures" value="yes"></td>
+                        </tr>
+                        <tr>
+                            <td>Number of Words</td>
+                            <td><input type="checkbox" name="numWords" value="yes"></td>
+                        </tr>
+                        <tr>
+                            <td>Has this manuscript been submitted previously to this journal</td>
+                            <td><input type="checkbox" name="prevSubmission" value="yes"></td>
+                        </tr>
+                        <tr>
+                            <td>Are any of the included images potential journal covers</td>
+                            <td><input type="checkbox" name="journalCovers" value="yes"></td>
+                        </tr>
+                        <tr>
+                            <td>Are you willing to pay the journal's fee for color reproduction?</td>
+                            <td><input type="checkbox" name="colorFee" value="yes"></td>
+                        </tr>
+                        <tr>
+                            <td>Confirm that the manuscript has been submitted solely to this journal and is not published, in press, or submitted elsewhere.</td>
+                            <td><input type="checkbox" name="soleSubmission" value="yes"></td>
+                        </tr>
+                        <tr>
+                            <td>Confirm that all the research meets the ethical guidelines, including adherence to the legal requirements of the study country.</td>
+                            <td><input type="checkbox" name="ethicalGuidelines" value="yes"></td>
+                        </tr>
+                        <tr>
+                            <td>Do you have any conflict of interest?</td>
+                            <td><input type="checkbox" name="conflictInterest" value="yes"></td>
+                        </tr>
+                        <tr>
+                            <td>Confirm that you have prepared a complete text minus the title page, acknowledgments, and any running headers with author names, to allow anonymized review.</td>
+                            <td><input type="checkbox" name="anonymizedReview" value="yes"></td>
+                        </tr>
+                        <tr>
+                            <td>Do you wish to include the ability to collect research funding information for manuscripts?</td>
+                            <td><input type="checkbox" name="researchFunding" value="yes"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Section 7: Additional Questions -->
+            <div class="section">
+                <h2>Additional Questions</h2>
+                <div class="form-group">
+                    <label>If additional questions are required, please enter them in the spaces provided below.</label>
+                    <div class="additional-questions" id="additionalQuestionsContainer">
+                        <div class="additional-question-row">
+                            <input type="text" name="additionalQ1" placeholder="1. Enter additional question..." class="additional-question-input">
+                            <button type="button" class="remove-btn" onclick="removeAdditionalQuestion(this)" style="display: none;">Remove</button>
+                        </div>
+                        <div class="additional-question-row">
+                            <input type="text" name="additionalQ2" placeholder="2. Enter additional question..." class="additional-question-input">
+                            <button type="button" class="remove-btn" onclick="removeAdditionalQuestion(this)" style="display: none;">Remove</button>
+                        </div>
+                        <div class="additional-question-row">
+                            <input type="text" name="additionalQ3" placeholder="3. Enter additional question..." class="additional-question-input">
+                            <button type="button" class="remove-btn" onclick="removeAdditionalQuestion(this)">Remove</button>
+                        </div>
+                    </div>
+                    <button type="button" class="add-btn" onclick="addAdditionalQuestion()">Add Another Question</button>
+                </div>
+            </div>
+
+            <!-- Section 8: Default Role -->
+            <div class="section">
+                <h2>Default User Role</h2>
+                <div class="form-group">
+                    <label for="defaultRole">What are the default roles given to users entering your site? <span class="required">*</span></label>
+                    <select id="defaultRole" name="defaultRole" required>
+                        <option value="">Click here to choose a response</option>
+                        <option value="author">Author</option>
+                        <option value="author-reviewer">Author and Reviewer</option>
+                        <option value="reviewer">Reviewer</option>
+                    </select>
+                    <div class="char-limit">Many societies give the default as both Author and Reviewer to grow their reviewer database. Titles that wish to tightly control their reviewer database should select "Author" only. Users with the role of reviewer in their profile are eligible to be assigned as reviewers.</div>
+                </div>
+            </div>
+
+            <!-- Section 9: Additional Information -->
+            <div class="section">
+                <h2>Additional Information</h2>
+                <div class="form-group">
+                    <label for="additionalInfo">Please use the box below to supply alternative role names or any other additional information about your process relevant to your site build.</label>
+                    <textarea id="additionalInfo" name="additionalInfo" placeholder="Enter any additional information here..."></textarea>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn">Submit Requirements</button>
+        </form>
+    </div>
+
+    <script>
+        // URL validation and preview functionality
+        function validateUrlSuffix() {
+            const urlInput = document.getElementById('urlSuffix');
+            const urlPreview = document.getElementById('urlPreview');
+            const validationMessage = document.getElementById('urlValidation');
+            const value = urlInput.value.trim();
+            
+            // Clear previous validation styles
+            urlInput.classList.remove('input-error', 'input-success', 'input-warning');
+            validationMessage.classList.remove('error', 'success', 'warning');
+            
+            // Update preview
+            urlPreview.textContent = value || 'enter_your_suffix_here';
+            
+            if (value === '') {
+                validationMessage.textContent = '';
+                return true;
+            }
+            
+            // Check length
+            if (value.length > 18) {
+                urlInput.classList.add('input-error');
+                validationMessage.classList.add('error');
+                validationMessage.textContent = 'URL suffix must be 18 characters or less';
+                return false;
+            }
+            
+            // Check for invalid characters
+            const invalidChars = value.match(/[^a-zA-Z0-9]/g);
+            if (invalidChars) {
+                urlInput.classList.add('input-error');
+                validationMessage.classList.add('error');
+                validationMessage.textContent = `Invalid characters: ${[...new Set(invalidChars)].join(', ')}. Only letters and numbers are allowed.`;
+                return false;
+            }
+            
+            // Check minimum length (optional - good practice)
+            if (value.length < 3) {
+                urlInput.classList.add('input-warning');
+                validationMessage.classList.add('warning');
+                validationMessage.textContent = 'URL suffix should be at least 3 characters long';
+                return true; // Warning, not error
+            }
+            
+            // Check if starts with number (optional - good practice)
+            if (/^\d/.test(value)) {
+                urlInput.classList.add('input-warning');
+                validationMessage.classList.add('warning');
+                validationMessage.textContent = 'URL suffix should not start with a number';
+                return true; // Warning, not error
+            }
+            
+            // All validations passed
+            urlInput.classList.add('input-success');
+            validationMessage.classList.add('success');
+            validationMessage.textContent = 'Valid URL suffix';
+            return true;
+        }
+        
+        document.getElementById('urlSuffix').addEventListener('input', validateUrlSuffix);
+        document.getElementById('urlSuffix').addEventListener('blur', validateUrlSuffix);
+
+        // Manuscript type management
+        let manuscriptTypeCounter = 3;
+        
+        function addManuscriptType() {
+            manuscriptTypeCounter++;
+            const container = document.getElementById('manuscriptTypesContainer');
+            const newRow = document.createElement('div');
+            newRow.className = 'manuscript-type-row';
+            newRow.innerHTML = `
+                <input type="text" name="manuscriptType${manuscriptTypeCounter}" placeholder="${manuscriptTypeCounter}. " class="manuscript-type-input">
+                <button type="button" class="remove-btn" onclick="removeManuscriptType(this)">Remove</button>
+            `;
+            container.appendChild(newRow);
+            
+            // Show remove buttons when we have more than 2 fields
+            updateRemoveButtonVisibility();
+        }
+        
+        function removeManuscriptType(button) {
+            const row = button.parentElement;
+            row.remove();
+            
+            // Renumber remaining fields
+            renumberManuscriptTypes();
+            
+            // Update remove button visibility
+            updateRemoveButtonVisibility();
+        }
+        
+        function renumberManuscriptTypes() {
+            const container = document.getElementById('manuscriptTypesContainer');
+            const rows = container.querySelectorAll('.manuscript-type-row');
+            
+            rows.forEach((row, index) => {
+                const input = row.querySelector('.manuscript-type-input');
+                const currentName = input.name;
+                const newName = `manuscriptType${index + 1}`;
+                input.name = newName;
+                
+                // Update placeholder to show correct number
+                const currentPlaceholder = input.placeholder;
+                const newPlaceholder = currentPlaceholder.replace(/^\d+/, index + 1);
+                input.placeholder = newPlaceholder;
+            });
+            
+            // Update counter
+            manuscriptTypeCounter = rows.length;
+        }
+        
+        function updateRemoveButtonVisibility() {
+            const container = document.getElementById('manuscriptTypesContainer');
+            const removeButtons = container.querySelectorAll('.remove-btn');
+            const rows = container.querySelectorAll('.manuscript-type-row');
+            
+            // Show remove buttons only if we have more than 2 rows
+            removeButtons.forEach(button => {
+                button.style.display = rows.length > 2 ? 'block' : 'none';
+            });
+        }
+
+        // Additional questions management
+        let additionalQuestionCounter = 3;
+        
+        function addAdditionalQuestion() {
+            additionalQuestionCounter++;
+            const container = document.getElementById('additionalQuestionsContainer');
+            const newRow = document.createElement('div');
+            newRow.className = 'additional-question-row';
+            newRow.innerHTML = `
+                <input type="text" name="additionalQ${additionalQuestionCounter}" placeholder="${additionalQuestionCounter}. Enter additional question..." class="additional-question-input">
+                <button type="button" class="remove-btn" onclick="removeAdditionalQuestion(this)">Remove</button>
+            `;
+            container.appendChild(newRow);
+            
+            // Show remove buttons when we have more than 2 fields
+            updateAdditionalQuestionRemoveButtonVisibility();
+        }
+        
+        function removeAdditionalQuestion(button) {
+            const row = button.parentElement;
+            row.remove();
+            
+            // Renumber remaining fields
+            renumberAdditionalQuestions();
+            
+            // Update remove button visibility
+            updateAdditionalQuestionRemoveButtonVisibility();
+        }
+        
+        function renumberAdditionalQuestions() {
+            const container = document.getElementById('additionalQuestionsContainer');
+            const rows = container.querySelectorAll('.additional-question-row');
+            
+            rows.forEach((row, index) => {
+                const input = row.querySelector('.additional-question-input');
+                const currentName = input.name;
+                const newName = `additionalQ${index + 1}`;
+                input.name = newName;
+                
+                // Update placeholder to show correct number
+                const currentPlaceholder = input.placeholder;
+                const newPlaceholder = currentPlaceholder.replace(/^\d+/, index + 1);
+                input.placeholder = newPlaceholder;
+            });
+            
+            // Update counter
+            additionalQuestionCounter = rows.length;
+        }
+        
+        function updateAdditionalQuestionRemoveButtonVisibility() {
+            const container = document.getElementById('additionalQuestionsContainer');
+            const removeButtons = container.querySelectorAll('.remove-btn');
+            const rows = container.querySelectorAll('.additional-question-row');
+            
+            // Show remove buttons only if we have more than 2 rows
+            removeButtons.forEach(button => {
+                button.style.display = rows.length > 2 ? 'block' : 'none';
+            });
+        }
+
+        // Form submission
+        document.getElementById('requirementsForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Validate URL suffix before submission
+            if (!validateUrlSuffix()) {
+                alert('Please fix the URL suffix before submitting the form.');
+                document.getElementById('urlSuffix').focus();
+                return;
+            }
+            
+            // Collect all form data
+            const formData = new FormData(this);
+            const data = {};
+            
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            
+            // Handle checkbox fields (unchecked checkboxes don't appear in FormData)
+            const checkboxFields = ['numFigures', 'numTables', 'numColorFigures', 'numWords', 
+                                   'prevSubmission', 'journalCovers', 'colorFee', 'soleSubmission', 
+                                   'ethicalGuidelines', 'conflictInterest', 'anonymizedReview', 'researchFunding'];
+            
+            checkboxFields.forEach(field => {
+                if (!data[field]) {
+                    data[field] = 'no';
+                } else {
+                    data[field] = 'yes';
+                }
+            });
+            
+            // Add manuscript types as array (dynamically collect all manuscript type fields)
+            data.manuscriptTypes = [];
+            const manuscriptInputs = document.querySelectorAll('input[name^="manuscriptType"]');
+            manuscriptInputs.forEach(input => {
+                const value = input.value.trim();
+                if (value) {
+                    data.manuscriptTypes.push(value);
+                }
+            });
+            
+            // Add additional questions as array (dynamically collect all additional question fields)
+            data.additionalQuestions = [];
+            const additionalInputs = document.querySelectorAll('input[name^="additionalQ"]');
+            additionalInputs.forEach(input => {
+                const value = input.value.trim();
+                if (value) {
+                    data.additionalQuestions.push(value);
+                }
+            });
+            
+            // Add submission timestamp
+            data.submittedAt = new Date().toISOString();
+            
+            // Save to localStorage for demonstration
+            const submissions = JSON.parse(localStorage.getItem('s1m_submissions') || '[]');
+            submissions.push(data);
+            localStorage.setItem('s1m_submissions', JSON.stringify(submissions));
+            
+            // Debug logging
+            console.log('Saving submission:', data);
+            console.log('Total submissions now:', submissions.length);
+            console.log('Saved to localStorage:', localStorage.getItem('s1m_submissions'));
+            
+            // Show success message
+            console.log('Form Data:', data);
+            alert('Form submitted successfully! You can view it in the Admin Console.');
+            
+            // Reset form
+            this.reset();
+            
+            // Reset dynamic fields
+            document.getElementById('urlPreview').textContent = 'enter_your_suffix_here';
+            document.getElementById('urlValidation').textContent = '';
+            document.getElementById('urlSuffix').classList.remove('input-error', 'input-success', 'input-warning');
+            
+            // Here you would typically send the data to a server
+            // fetch('/submit-requirements', {
+            //     method: 'POST',
+            //     headers: {
+            //         'Content-Type': 'application/json',
+            //     },
+            //     body: JSON.stringify(data)
+            // });
+        });
+
+    </script>
+</body>
+</html>
