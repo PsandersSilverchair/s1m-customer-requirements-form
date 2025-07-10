@@ -1047,6 +1047,17 @@
             }
         }
 
+        // Monitor auth popup for manual authentication
+        function monitorAuthPopup(popup) {
+            const checkClosed = setInterval(() => {
+                if (popup.closed) {
+                    clearInterval(checkClosed);
+                    // Check if we got a session token
+                    checkAuthResult();
+                }
+            }, 1000);
+        }
+
         // Close new request lightbox
         function closeNewRequestLightbox() {
             document.getElementById('newRequestLightbox').style.display = 'none';
@@ -1077,7 +1088,7 @@
                     },
                     body: JSON.stringify({ 
                         salesforceUrl,
-                        redirectPage: 'admin.html'
+                        redirectPage: 'auth-callback.html'
                     })
                 });
 
@@ -1087,8 +1098,16 @@
 
                 const data = await response.json();
                 
-                // Redirect to Salesforce
-                window.location.href = data.authUrl;
+                // Open popup window instead of main window redirect
+                const popup = window.open(data.authUrl, 'salesforceAuth', 'width=600,height=700,scrollbars=yes,resizable=yes');
+                
+                if (!popup) {
+                    showMessage('authResult', 'Popup blocked! Please allow popups for this site and try again.', 'error');
+                    return;
+                }
+                
+                // Monitor popup for completion
+                monitorAuthPopup(popup);
                 
             } catch (error) {
                 console.error('Authentication error:', error);
