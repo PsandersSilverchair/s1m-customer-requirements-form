@@ -248,6 +248,45 @@
             font-style: italic;
             margin-left: 10px;
         }
+        .status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status.new {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+        .status.reviewed {
+            background-color: #fff3e0;
+            color: #f57c00;
+        }
+        .status.in_progress {
+            background-color: #f3e5f5;
+            color: #7b1fa2;
+        }
+        .status.completed {
+            background-color: #e8f5e8;
+            color: #388e3c;
+        }
+        .action-btn {
+            padding: 4px 8px;
+            margin: 0 2px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .action-btn.edit {
+            background-color: #007bff;
+            color: white;
+        }
+        .action-btn.status {
+            background-color: #28a745;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -263,16 +302,60 @@
     </div>
 
     <div class="container">
+        <!-- Search and Filter Controls -->
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
+            <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 200px;">
+                    <label for="searchInput" style="display: block; margin-bottom: 5px; font-weight: bold;">Search:</label>
+                    <input type="text" id="searchInput" placeholder="Search by journal name, customer, or URL..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;" oninput="filterSubmissions()">
+                </div>
+                <div>
+                    <label for="statusFilter" style="display: block; margin-bottom: 5px; font-weight: bold;">Status:</label>
+                    <select id="statusFilter" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;" onchange="filterSubmissions()">
+                        <option value="">All Statuses</option>
+                        <option value="new">New</option>
+                        <option value="reviewed">Reviewed</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="workflowFilter" style="display: block; margin-bottom: 5px; font-weight: bold;">Workflow:</label>
+                    <select id="workflowFilter" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;" onchange="filterSubmissions()">
+                        <option value="">All Workflows</option>
+                        <option value="option1">One Level Editor</option>
+                        <option value="option2">Two Levels (First Decides)</option>
+                        <option value="option3">Two Levels (Second Decides)</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="dateFilter" style="display: block; margin-bottom: 5px; font-weight: bold;">Date Range:</label>
+                    <select id="dateFilter" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;" onchange="filterSubmissions()">
+                        <option value="">All Time</option>
+                        <option value="today">Today</option>
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                    </select>
+                </div>
+                <div style="margin-top: 20px;">
+                    <button onclick="clearFilters()" style="padding: 8px 15px; background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Clear Filters</button>
+                    <span id="filterResults" style="margin-left: 15px; color: #666; font-size: 14px;"></span>
+                </div>
+            </div>
+        </div>
+
         <div class="table-container">
             <table id="submissionsTable">
                 <thead>
                     <tr>
                         <th>Journal Name</th>
+                        <th>Customer</th>
                         <th>Workflow</th>
                         <th>Review Process</th>
                         <th>URL Suffix</th>
                         <th>Submitted</th>
                         <th>Status</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="submissionsTableBody">
@@ -465,35 +548,100 @@
             localStorage.setItem('s1m_submissions', JSON.stringify(submissions));
         }
 
+        // Store filtered submissions
+        let filteredSubmissions = [];
+
         // Render submissions table
-        function renderSubmissions() {
+        function renderSubmissions(submissionsToRender = null) {
             const tbody = document.getElementById('submissionsTableBody');
             const noSubmissions = document.getElementById('noSubmissions');
             
-            if (submissions.length === 0) {
+            // Use provided submissions or all submissions
+            const currentSubmissions = submissionsToRender || submissions;
+            filteredSubmissions = currentSubmissions;
+            
+            if (currentSubmissions.length === 0) {
                 tbody.innerHTML = '';
                 noSubmissions.style.display = 'block';
+                updateFilterResults(0, submissions.length);
                 return;
             }
 
             noSubmissions.style.display = 'none';
             
-            tbody.innerHTML = submissions.map((submission, index) => {
+            tbody.innerHTML = currentSubmissions.map((submission, index) => {
+                // Get original index in full submissions array
+                const originalIndex = submissions.findIndex(s => s.submittedAt === submission.submittedAt && s.journalName === submission.journalName);
+                
                 const workflowText = getWorkflowText(submission.workflow);
                 const reviewText = submission.peerReview === 'single' ? 'Single' : 'Double';
                 const submittedDate = new Date(submission.submittedAt || Date.now()).toLocaleDateString();
+                const customerName = submission.customerData ? submission.customerData.name : 'N/A';
+                const status = getSubmissionStatus(submission);
                 
                 return `
-                    <tr onclick="openEditLightbox(${index})">
+                    <tr>
                         <td>${submission.journalName || 'Untitled Journal'}</td>
+                        <td>${customerName}</td>
                         <td>${workflowText}</td>
                         <td>${reviewText}</td>
                         <td>${submission.urlSuffix || 'N/A'}</td>
                         <td>${submittedDate}</td>
-                        <td><span class="status new">New</span></td>
+                        <td><span class="status ${status.class}">${status.text}</span></td>
+                        <td>
+                            <button class="action-btn edit" onclick="openEditLightbox(${originalIndex})">Edit</button>
+                            <button class="action-btn status" onclick="cycleStatus(${originalIndex})">Status</button>
+                        </td>
                     </tr>
                 `;
             }).join('');
+            
+            updateFilterResults(currentSubmissions.length, submissions.length);
+        }
+
+        // Get submission status based on various factors
+        function getSubmissionStatus(submission) {
+            // Initialize status if not set
+            if (!submission.status) {
+                submission.status = 'new';
+            }
+            
+            // Auto-update status based on time and interaction
+            const submittedDate = new Date(submission.submittedAt || Date.now());
+            const daysSinceSubmission = (Date.now() - submittedDate.getTime()) / (1000 * 60 * 60 * 24);
+            
+            // If it's been edited, it's at least "reviewed"
+            if (submission.lastModified && submission.status === 'new') {
+                submission.status = 'reviewed';
+            }
+            
+            // Auto-change very old "new" submissions to "reviewed"
+            if (submission.status === 'new' && daysSinceSubmission > 7) {
+                submission.status = 'reviewed';
+            }
+            
+            const statusMap = {
+                'new': { text: 'New', class: 'new' },
+                'reviewed': { text: 'Reviewed', class: 'reviewed' },
+                'in_progress': { text: 'In Progress', class: 'in_progress' },
+                'completed': { text: 'Completed', class: 'completed' }
+            };
+            
+            return statusMap[submission.status] || statusMap['new'];
+        }
+
+        // Cycle through status options
+        function cycleStatus(index) {
+            const statusOrder = ['new', 'reviewed', 'in_progress', 'completed'];
+            const submission = submissions[index];
+            const currentStatusIndex = statusOrder.indexOf(submission.status || 'new');
+            const nextStatusIndex = (currentStatusIndex + 1) % statusOrder.length;
+            
+            submission.status = statusOrder[nextStatusIndex];
+            submission.lastModified = new Date().toISOString();
+            
+            saveSubmissions();
+            filterSubmissions(); // Re-render with current filters
         }
 
         // Get readable workflow text
@@ -503,6 +651,76 @@
                 case 'option2': return 'Two Levels (First Decides)';
                 case 'option3': return 'Two Levels (Second Decides)';
                 default: return 'Unknown';
+            }
+        }
+
+        // Filter submissions based on search and filter criteria
+        function filterSubmissions() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const workflowFilter = document.getElementById('workflowFilter').value;
+            const dateFilter = document.getElementById('dateFilter').value;
+
+            let filtered = submissions.filter(submission => {
+                // Search filter
+                const searchMatch = !searchTerm || 
+                    (submission.journalName || '').toLowerCase().includes(searchTerm) ||
+                    (submission.urlSuffix || '').toLowerCase().includes(searchTerm) ||
+                    (submission.customerData && submission.customerData.name || '').toLowerCase().includes(searchTerm);
+
+                // Status filter
+                const status = getSubmissionStatus(submission);
+                const statusMatch = !statusFilter || status.class === statusFilter;
+
+                // Workflow filter
+                const workflowMatch = !workflowFilter || submission.workflow === workflowFilter;
+
+                // Date filter
+                const dateMatch = matchesDateFilter(submission, dateFilter);
+
+                return searchMatch && statusMatch && workflowMatch && dateMatch;
+            });
+
+            renderSubmissions(filtered);
+        }
+
+        // Check if submission matches date filter
+        function matchesDateFilter(submission, dateFilter) {
+            if (!dateFilter) return true;
+
+            const submittedDate = new Date(submission.submittedAt || Date.now());
+            const now = new Date();
+            
+            switch(dateFilter) {
+                case 'today':
+                    return submittedDate.toDateString() === now.toDateString();
+                case 'week':
+                    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                    return submittedDate >= weekAgo;
+                case 'month':
+                    const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                    return submittedDate >= monthAgo;
+                default:
+                    return true;
+            }
+        }
+
+        // Clear all filters
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('workflowFilter').value = '';
+            document.getElementById('dateFilter').value = '';
+            filterSubmissions();
+        }
+
+        // Update filter results display
+        function updateFilterResults(showing, total) {
+            const filterResults = document.getElementById('filterResults');
+            if (showing === total) {
+                filterResults.textContent = `Showing all ${total} submissions`;
+            } else {
+                filterResults.textContent = `Showing ${showing} of ${total} submissions`;
             }
         }
 
@@ -638,11 +856,17 @@
                 .map(input => input.value.trim())
                 .filter(value => value);
             
+            // Mark as reviewed and update timestamp
+            if (submission.status === 'new') {
+                submission.status = 'reviewed';
+            }
+            submission.lastModified = new Date().toISOString();
+            
             // Save to localStorage
             saveSubmissions();
             
-            // Update table display
-            renderSubmissions();
+            // Update table display with current filters
+            filterSubmissions();
             
             // Close lightbox
             closeLightbox();
