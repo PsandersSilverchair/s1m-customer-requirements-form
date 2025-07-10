@@ -224,8 +224,16 @@
     <div class="container">
         <div style="text-align: right; margin-bottom: 20px;">
             <a href="admin.html" style="color: #007bff; text-decoration: none; font-weight: bold;">→ View Admin Console</a>
+            <a href="salesforce-integration.html" style="color: #007bff; text-decoration: none; font-weight: bold; margin-left: 15px;">→ Salesforce Integration</a>
         </div>
         <h1>S1M Customer Requirements Document</h1>
+        
+        <!-- Salesforce Customer Data Display -->
+        <div id="customerDataSection" class="section" style="display: none; background-color: #e8f5e8; border-left-color: #28a745;">
+            <h2>Selected Customer Information</h2>
+            <div id="customerDataDisplay"></div>
+            <button type="button" onclick="clearCustomerData()" style="background-color: #dc3545; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;">Clear Customer Data</button>
+        </div>
         
         <div class="note">
             <strong>Note:</strong> Fields marked with <span class="required">*</span> are required.
@@ -729,6 +737,68 @@
             //     body: JSON.stringify(data)
             // });
         });
+
+        // Load Salesforce customer data if available
+        function loadCustomerData() {
+            const customerData = localStorage.getItem('selectedSalesforceCustomer');
+            if (customerData) {
+                try {
+                    const customer = JSON.parse(customerData);
+                    displayCustomerData(customer);
+                } catch (error) {
+                    console.error('Error loading customer data:', error);
+                }
+            }
+        }
+
+        // Display customer data
+        function displayCustomerData(customer) {
+            const customerSection = document.getElementById('customerDataSection');
+            const customerDisplay = document.getElementById('customerDataDisplay');
+            
+            customerSection.style.display = 'block';
+            
+            const html = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div><strong>Company:</strong> ${customer.name || 'N/A'}</div>
+                    <div><strong>Industry:</strong> ${customer.industry || 'N/A'}</div>
+                    <div><strong>Type:</strong> ${customer.type || 'N/A'}</div>
+                    <div><strong>Website:</strong> ${customer.website || 'N/A'}</div>
+                    <div><strong>Phone:</strong> ${customer.phone || 'N/A'}</div>
+                    <div><strong>Email:</strong> ${customer.email || 'N/A'}</div>
+                    <div><strong>City:</strong> ${customer.city || 'N/A'}</div>
+                    <div><strong>State:</strong> ${customer.state || 'N/A'}</div>
+                </div>
+                <div style="font-size: 12px; color: #666; margin-top: 10px;">
+                    Selected from Salesforce on ${new Date(customer.selectedAt).toLocaleString()}
+                </div>
+            `;
+            
+            customerDisplay.innerHTML = html;
+            
+            // Pre-fill journal name if available
+            if (customer.name) {
+                const journalNameField = document.getElementById('journalName');
+                if (journalNameField && !journalNameField.value) {
+                    journalNameField.value = customer.name;
+                }
+            }
+        }
+
+        // Clear customer data
+        function clearCustomerData() {
+            localStorage.removeItem('selectedSalesforceCustomer');
+            document.getElementById('customerDataSection').style.display = 'none';
+            
+            // Clear pre-filled journal name
+            const journalNameField = document.getElementById('journalName');
+            if (journalNameField) {
+                journalNameField.value = '';
+            }
+        }
+
+        // Load customer data when page loads
+        document.addEventListener('DOMContentLoaded', loadCustomerData);
 
     </script>
 </body>
