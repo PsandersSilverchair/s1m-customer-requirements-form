@@ -157,14 +157,14 @@ app.get('/api/auth/callback', async (req, res) => {
         });
 
         // Redirect to frontend with session token
-        const frontendUrl = new URL('/salesforce-integration.html', process.env.FRONTEND_URL);
+        const frontendUrl = new URL('/s1m-customer-requirements-form/salesforce-integration.html', process.env.FRONTEND_URL);
         frontendUrl.searchParams.append('session', sessionToken);
         frontendUrl.searchParams.append('success', 'true');
 
         res.redirect(frontendUrl.toString());
     } catch (error) {
         console.error('Auth callback error:', error);
-        const frontendUrl = new URL('/salesforce-integration.html', process.env.FRONTEND_URL);
+        const frontendUrl = new URL('/s1m-customer-requirements-form/salesforce-integration.html', process.env.FRONTEND_URL);
         frontendUrl.searchParams.append('error', 'auth_failed');
         res.redirect(frontendUrl.toString());
     }
