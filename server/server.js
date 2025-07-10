@@ -190,7 +190,23 @@ app.get('/api/customers/search', async (req, res) => {
         // Retrieve session data
         const sessionData = tokenStore.get(session);
         if (!sessionData) {
-            return res.status(401).json({ error: 'Invalid or expired session' });
+            return res.status(401).json({ 
+                error: 'Invalid or expired session',
+                code: 'SESSION_EXPIRED',
+                message: 'Please reconnect to Salesforce'
+            });
+        }
+
+        // Check if session is too old (2 hours)
+        const sessionAge = Date.now() - sessionData.timestamp;
+        const maxSessionAge = 2 * 60 * 60 * 1000; // 2 hours
+        if (sessionAge > maxSessionAge) {
+            tokenStore.delete(session);
+            return res.status(401).json({ 
+                error: 'Session expired',
+                code: 'SESSION_EXPIRED',
+                message: 'Session has been expired for security reasons'
+            });
         }
 
         // Build SOSL query
@@ -229,12 +245,19 @@ app.get('/api/customers/search', async (req, res) => {
         console.error('Customer search error:', error);
         
         if (error.response?.status === 401) {
-            return res.status(401).json({ error: 'Salesforce authentication expired' });
+            // Salesforce token expired, clean up our session
+            tokenStore.delete(session);
+            return res.status(401).json({ 
+                error: 'Salesforce authentication expired',
+                code: 'SALESFORCE_TOKEN_EXPIRED',
+                message: 'Your Salesforce session has expired. Please reconnect.'
+            });
         }
         
         res.status(500).json({ 
             error: 'Search failed', 
-            details: error.response?.data?.message || error.message 
+            details: error.response?.data?.message || error.message,
+            code: 'SEARCH_ERROR'
         });
     }
 });
@@ -252,7 +275,23 @@ app.get('/api/customers/:id', async (req, res) => {
         // Retrieve session data
         const sessionData = tokenStore.get(session);
         if (!sessionData) {
-            return res.status(401).json({ error: 'Invalid or expired session' });
+            return res.status(401).json({ 
+                error: 'Invalid or expired session',
+                code: 'SESSION_EXPIRED',
+                message: 'Please reconnect to Salesforce'
+            });
+        }
+
+        // Check if session is too old (2 hours)
+        const sessionAge = Date.now() - sessionData.timestamp;
+        const maxSessionAge = 2 * 60 * 60 * 1000; // 2 hours
+        if (sessionAge > maxSessionAge) {
+            tokenStore.delete(session);
+            return res.status(401).json({ 
+                error: 'Session expired',
+                code: 'SESSION_EXPIRED',
+                message: 'Session has been expired for security reasons'
+            });
         }
 
         // Get customer details from Salesforce

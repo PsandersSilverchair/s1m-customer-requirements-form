@@ -1107,6 +1107,7 @@
 
             if (!sessionToken) {
                 showMessage('searchResults', 'Please authenticate with Salesforce first', 'error');
+                handleSessionExpired();
                 return;
             }
 
@@ -1117,12 +1118,13 @@
                 
                 if (!response.ok) {
                     if (response.status === 401) {
-                        showMessage('searchResults', 'Session expired. Please reconnect to Salesforce.', 'error');
-                        sessionToken = null;
-                        document.getElementById('searchSection').style.display = 'none';
+                        console.log('Session expired, attempting to re-authenticate...');
+                        handleSessionExpired();
                         return;
                     }
-                    throw new Error(`Search failed: ${response.status}`);
+                    
+                    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                    throw new Error(errorData.error || `Search failed: ${response.status}`);
                 }
 
                 const data = await response.json();
@@ -1130,8 +1132,34 @@
                 
             } catch (error) {
                 console.error('Search error:', error);
-                showMessage('searchResults', `Search failed: ${error.message}`, 'error');
+                
+                // Handle network errors or fetch failures
+                if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
+                    showMessage('searchResults', 'Connection lost. Please check your internet connection and try again.', 'error');
+                } else {
+                    showMessage('searchResults', `Search failed: ${error.message}`, 'error');
+                }
             }
+        }
+
+        // Handle session expiration
+        function handleSessionExpired() {
+            sessionToken = null;
+            localStorage.removeItem('salesforce_session_token');
+            localStorage.removeItem('salesforce_session_token_temp');
+            
+            // Reset UI to authentication state
+            document.getElementById('statusSection').style.display = 'block';
+            document.getElementById('searchSection').style.display = 'none';
+            document.getElementById('selectedCustomerSection').style.display = 'none';
+            document.getElementById('proceedBtn').style.display = 'none';
+            
+            showMessage('authResult', 'Session expired. Reconnecting to Salesforce...', 'loading');
+            
+            // Auto-attempt re-authentication
+            setTimeout(() => {
+                autoAuthenticate();
+            }, 1000);
         }
 
         // Display search results
