@@ -381,16 +381,23 @@
                 <button class="close-btn" onclick="closeNewRequestLightbox()">&times;</button>
             </div>
             <div class="lightbox-body">
-                <!-- Authentication Section -->
-                <div id="authSection">
+                <!-- Status Section -->
+                <div id="statusSection">
+                    <div style="background-color: #e8f4fd; border: 1px solid #007bff; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                        <div id="authResult">Initializing...</div>
+                    </div>
+                </div>
+
+                <!-- Authentication Section (hidden by default) -->
+                <div id="authSection" style="display: none;">
                     <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
-                        <h3>Salesforce Authentication</h3>
+                        <h3>Salesforce Authentication Required</h3>
+                        <p>Please authenticate with Salesforce to search for customers.</p>
                         <div class="form-group">
                             <label for="salesforceUrl">Your Salesforce URL:</label>
                             <input type="url" id="salesforceUrl" placeholder="https://scholarone.my.salesforce.com" value="https://scholarone.my.salesforce.com">
                         </div>
                         <button onclick="authenticateSalesforce()" style="background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Connect to Salesforce</button>
-                        <div id="authResult"></div>
                     </div>
                 </div>
 
@@ -720,16 +727,72 @@
         // Open new request lightbox
         function openNewRequestLightbox() {
             document.getElementById('newRequestLightbox').style.display = 'block';
-            // Check if already authenticated
+            
+            // Check if already authenticated from URL params
             const urlParams = new URLSearchParams(window.location.search);
             const success = urlParams.get('success');
             const session = urlParams.get('session');
             
             if (success === 'true' && session) {
                 sessionToken = session;
+                // Store session for future use
+                localStorage.setItem('salesforce_session_token', session);
                 showMessage('authResult', 'Successfully connected to Salesforce!', 'success');
-                document.getElementById('searchSection').style.display = 'block';
+                showSearchSection();
                 window.history.replaceState({}, document.title, window.location.pathname);
+                return;
+            }
+            
+            // Check if we have a stored session token
+            const storedSession = localStorage.getItem('salesforce_session_token');
+            if (storedSession) {
+                sessionToken = storedSession;
+                showSearchSection();
+                return;
+            }
+            
+            // Auto-attempt Salesforce authentication
+            showMessage('authResult', 'Connecting to Salesforce...', 'loading');
+            autoAuthenticate();
+        }
+
+        // Show search section and hide auth
+        function showSearchSection() {
+            document.getElementById('statusSection').style.display = 'none';
+            document.getElementById('authSection').style.display = 'none';
+            document.getElementById('searchSection').style.display = 'block';
+        }
+
+        // Auto-authenticate with Salesforce using stored/default URL
+        async function autoAuthenticate() {
+            const salesforceUrl = 'https://scholarone.my.salesforce.com'; // Default to your org
+            
+            try {
+                const response = await fetch(`${backendUrl}/api/auth/start`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        salesforceUrl,
+                        redirectPage: 'admin.html'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Backend error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                // Redirect to Salesforce for auto-authentication
+                window.location.href = data.authUrl;
+                
+            } catch (error) {
+                console.error('Auto-authentication error:', error);
+                // Fall back to manual authentication UI
+                showMessage('authResult', 'Please authenticate with Salesforce manually', 'error');
+                document.getElementById('authSection').style.display = 'block';
             }
         }
 
