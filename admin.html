@@ -775,7 +775,7 @@
                     },
                     body: JSON.stringify({ 
                         salesforceUrl,
-                        redirectPage: 'admin.html'
+                        redirectPage: 'auth-callback.html'  // Use a dedicated callback page
                     })
                 });
 
@@ -785,13 +785,40 @@
 
                 const data = await response.json();
                 
-                // Redirect to Salesforce for auto-authentication
-                window.location.href = data.authUrl;
+                // Open Salesforce auth in a popup window
+                const popup = window.open(
+                    data.authUrl,
+                    'salesforce-auth',
+                    'width=600,height=700,scrollbars=yes,resizable=yes'
+                );
+                
+                // Listen for popup completion
+                const checkClosed = setInterval(() => {
+                    if (popup.closed) {
+                        clearInterval(checkClosed);
+                        // Check if we got a session token
+                        checkAuthResult();
+                    }
+                }, 1000);
                 
             } catch (error) {
                 console.error('Auto-authentication error:', error);
                 // Fall back to manual authentication UI
                 showMessage('authResult', 'Please authenticate with Salesforce manually', 'error');
+                document.getElementById('authSection').style.display = 'block';
+            }
+        }
+
+        // Check auth result after popup closes
+        function checkAuthResult() {
+            const storedSession = localStorage.getItem('salesforce_session_token_temp');
+            if (storedSession) {
+                sessionToken = storedSession;
+                localStorage.setItem('salesforce_session_token', storedSession);
+                localStorage.removeItem('salesforce_session_token_temp');
+                showSearchSection();
+            } else {
+                showMessage('authResult', 'Authentication was cancelled or failed', 'error');
                 document.getElementById('authSection').style.display = 'block';
             }
         }
