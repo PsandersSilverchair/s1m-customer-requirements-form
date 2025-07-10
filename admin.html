@@ -1154,12 +1154,47 @@
             document.getElementById('selectedCustomerSection').style.display = 'none';
             document.getElementById('proceedBtn').style.display = 'none';
             
-            showMessage('authResult', 'Session expired. Reconnecting to Salesforce...', 'loading');
-            
-            // Auto-attempt re-authentication
+            // Show manual reconnection option instead of auto-retry
+            showMessage('authResult', 
+                `<div style="text-align: center;">
+                    <p><strong>Session expired.</strong></p>
+                    <p>Choose an option to reconnect:</p>
+                    <div style="margin: 15px 0;">
+                        <button onclick="manualReconnect()" style="background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 5px;">
+                            Reconnect to Salesforce
+                        </button>
+                        <br>
+                        <button onclick="restartWorkflow()" style="background-color: #28a745; color: white; padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; margin: 5px;">
+                            Start Fresh
+                        </button>
+                    </div>
+                    <p style="font-size: 12px; color: #666;">
+                        If you see a browser warning, click "Advanced" → "Proceed to site (unsafe)"<br>
+                        Or use "Start Fresh" to restart the entire process.
+                    </p>
+                </div>`, 
+                'error'
+            );
+        }
+
+        // Manual reconnection function
+        function manualReconnect() {
+            showMessage('authResult', 'Connecting to Salesforce...', 'loading');
+            autoAuthenticate();
+        }
+
+        // Restart the entire workflow
+        function restartWorkflow() {
+            closeNewRequestLightbox();
+            // Clear any stored session data
+            localStorage.removeItem('salesforce_session_token');
+            localStorage.removeItem('salesforce_session_token_temp');
+            sessionToken = null;
+            selectedCustomer = null;
+            // Restart the process
             setTimeout(() => {
-                autoAuthenticate();
-            }, 1000);
+                openNewRequestLightbox();
+            }, 500);
         }
 
         // Display search results
