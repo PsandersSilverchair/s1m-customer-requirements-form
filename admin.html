@@ -523,6 +523,27 @@
             loadSubmissions();
             renderSubmissions();
             setupFormChangeDetection();
+            
+            // Check if returning from authentication
+            checkAuthReturn();
+        }
+        
+        // Check if we're returning from authentication
+        function checkAuthReturn() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const success = urlParams.get('success');
+            const session = urlParams.get('session');
+            const authReturn = localStorage.getItem('auth_return_state');
+            
+            if (success === 'true' && session && authReturn === 'admin_console') {
+                // Clean up the return state
+                localStorage.removeItem('auth_return_state');
+                
+                // Auto-open the lightbox and continue where we left off
+                setTimeout(() => {
+                    openNewRequestLightbox();
+                }, 500);
+            }
         }
 
         // Load submissions from localStorage
@@ -1088,7 +1109,7 @@
                     },
                     body: JSON.stringify({ 
                         salesforceUrl,
-                        redirectPage: 'auth-callback.html'
+                        redirectPage: 'admin.html'
                     })
                 });
 
@@ -1098,16 +1119,12 @@
 
                 const data = await response.json();
                 
-                // Open popup window instead of main window redirect
-                const popup = window.open(data.authUrl, 'salesforceAuth', 'width=600,height=700,scrollbars=yes,resizable=yes');
+                // Store current page state and redirect to Salesforce (will return to callback)
+                localStorage.setItem('auth_return_state', 'admin_console');
+                showMessage('authResult', 'Redirecting to Salesforce...', 'loading');
                 
-                if (!popup) {
-                    showMessage('authResult', 'Popup blocked! Please allow popups for this site and try again.', 'error');
-                    return;
-                }
-                
-                // Monitor popup for completion
-                monitorAuthPopup(popup);
+                // Use window location redirect instead of popup to avoid security warnings
+                window.location.href = data.authUrl;
                 
             } catch (error) {
                 console.error('Authentication error:', error);

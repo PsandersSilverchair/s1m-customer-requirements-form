@@ -160,32 +160,11 @@ app.get('/api/auth/callback', async (req, res) => {
         // For popup-based auth, return HTML with session token instead of redirect
         const redirectPage = storedData.redirectPage || 'salesforce-integration.html';
         
-        if (redirectPage === 'auth-callback.html') {
-            // Return HTML that handles the popup completion
-            res.send(`
-                <!DOCTYPE html>
-                <html>
-                <head><title>Authentication Complete</title></head>
-                <body>
-                    <div style="text-align: center; padding: 40px; font-family: Arial;">
-                        <h2>Authentication Successful!</h2>
-                        <p>You can close this window.</p>
-                    </div>
-                    <script>
-                        // Store session token and close popup
-                        localStorage.setItem('salesforce_session_token_temp', '${sessionToken}');
-                        setTimeout(() => window.close(), 1000);
-                    </script>
-                </body>
-                </html>
-            `);
-        } else {
-            // Legacy redirect for non-popup flows
-            const frontendUrl = new URL(`/s1m-customer-requirements-form/${redirectPage}`, process.env.FRONTEND_URL);
-            frontendUrl.searchParams.append('session', sessionToken);
-            frontendUrl.searchParams.append('success', 'true');
-            res.redirect(frontendUrl.toString());
-        }
+        // Always redirect back to the specified page with session token
+        const frontendUrl = new URL(`/s1m-customer-requirements-form/${redirectPage}`, process.env.FRONTEND_URL);
+        frontendUrl.searchParams.append('session', sessionToken);
+        frontendUrl.searchParams.append('success', 'true');
+        res.redirect(frontendUrl.toString());
     } catch (error) {
         console.error('Auth callback error:', error);
         
