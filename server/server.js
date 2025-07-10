@@ -11,7 +11,14 @@ const PORT = process.env.PORT || 3000;
 // Security middleware
 app.use(helmet());
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'https://PsandersSilverchair.github.io',
+    origin: [
+        process.env.FRONTEND_URL || 'https://PsandersSilverchair.github.io',
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'http://127.0.0.1:3000',
+        'http://127.0.0.1:3001',
+        null  // Allow file:// protocol for local development
+    ],
     credentials: true
 }));
 

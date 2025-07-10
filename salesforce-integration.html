@@ -149,8 +149,8 @@
             <p><strong>Note:</strong> This requires the Node.js backend service to be running.</p>
             <div class="form-group">
                 <label for="backendUrl">Backend Server URL:</label>
-                <input type="url" id="backendUrl" value="http://localhost:3000" placeholder="http://localhost:3000">
-                <small style="color: #666; font-size: 12px;">Backend server must be running locally</small>
+                <input type="url" id="backendUrl" value="https://s1m-customer-requirements-form.onrender.com" placeholder="https://s1m-customer-requirements-form.onrender.com">
+                <small style="color: #666; font-size: 12px;">Backend server deployed on Render</small>
             </div>
             <div class="form-group">
                 <label for="salesforceUrl">Your Salesforce URL:</label>
@@ -182,7 +182,7 @@
     <script>
         let sessionToken = null;
         let selectedCustomer = null;
-        const backendUrl = () => document.getElementById('backendUrl').value || 'http://localhost:3000';
+        const backendUrl = () => document.getElementById('backendUrl').value || 'https://s1m-customer-requirements-form.onrender.com';
 
         // Initialize the page
         function init() {
@@ -210,7 +210,7 @@
             const savedConfig = localStorage.getItem('sf_integration_config');
             if (savedConfig) {
                 const config = JSON.parse(savedConfig);
-                document.getElementById('backendUrl').value = config.backendUrl || 'http://localhost:3000';
+                document.getElementById('backendUrl').value = config.backendUrl || 'https://s1m-customer-requirements-form.onrender.com';
                 document.getElementById('salesforceUrl').value = config.salesforceUrl || '';
             }
         }
