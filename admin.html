@@ -348,12 +348,12 @@
             <table id="submissionsTable">
                 <thead>
                     <tr>
+                        <th>Submitted</th>
                         <th>Journal Name</th>
                         <th>Customer</th>
                         <th>Workflow</th>
                         <th>Review Process</th>
                         <th>URL Suffix</th>
-                        <th>Submitted</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -575,18 +575,18 @@
                 
                 const workflowText = getWorkflowText(submission.workflow);
                 const reviewText = submission.peerReview === 'single' ? 'Single' : 'Double';
-                const submittedDate = new Date(submission.submittedAt || Date.now()).toLocaleDateString();
+                const submittedDate = new Date(submission.submittedAt || Date.now()).toLocaleDateString('en-US');
                 const customerName = submission.customerData ? submission.customerData.name : 'N/A';
                 const status = getSubmissionStatus(submission);
                 
                 return `
                     <tr>
+                        <td>${submittedDate}</td>
                         <td>${submission.journalName || 'Untitled Journal'}</td>
                         <td>${customerName}</td>
                         <td>${workflowText}</td>
                         <td>${reviewText}</td>
                         <td>${submission.urlSuffix || 'N/A'}</td>
-                        <td>${submittedDate}</td>
                         <td><span class="status ${status.class}">${status.text}</span></td>
                         <td>
                             <button class="action-btn edit" onclick="openEditLightbox(${originalIndex})">Edit</button>
