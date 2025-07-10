@@ -254,6 +254,7 @@
     <div class="header">
         <h1>S1M Requirements Admin Console</h1>
         <div>
+            <button onclick="openNewRequestLightbox()" style="margin-right: 15px; padding: 8px 16px; background: #28a745; border: none; color: white; border-radius: 5px; cursor: pointer; font-weight: bold;">+ New Requirement Request</button>
             <button onclick="refreshData()" style="margin-right: 10px; padding: 5px 10px; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 3px; cursor: pointer;">Refresh</button>
             <button onclick="debugLocalStorage()" style="margin-right: 10px; padding: 5px 10px; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 3px; cursor: pointer;">Debug</button>
             <button onclick="clearLocalStorage()" style="margin-right: 10px; padding: 5px 10px; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 3px; cursor: pointer;">Clear Data</button>
@@ -368,6 +369,55 @@
             <div class="lightbox-footer">
                 <button class="btn btn-secondary" onclick="closeLightbox()">Close</button>
                 <button class="btn btn-primary" onclick="saveSubmission()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Salesforce Account Search Lightbox -->
+    <div id="newRequestLightbox" class="lightbox">
+        <div class="lightbox-content">
+            <div class="lightbox-header">
+                <h2>New Requirement Request - Select Customer</h2>
+                <button class="close-btn" onclick="closeNewRequestLightbox()">&times;</button>
+            </div>
+            <div class="lightbox-body">
+                <!-- Authentication Section -->
+                <div id="authSection">
+                    <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                        <h3>Salesforce Authentication</h3>
+                        <div class="form-group">
+                            <label for="salesforceUrl">Your Salesforce URL:</label>
+                            <input type="url" id="salesforceUrl" placeholder="https://scholarone.my.salesforce.com" value="https://scholarone.my.salesforce.com">
+                        </div>
+                        <button onclick="authenticateSalesforce()" style="background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Connect to Salesforce</button>
+                        <div id="authResult"></div>
+                    </div>
+                </div>
+
+                <!-- Search Section -->
+                <div id="searchSection" style="display: none;">
+                    <div style="background-color: #d4edda; border: 1px solid #28a745; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                        <h3>Search Customers</h3>
+                        <div class="form-group">
+                            <label for="customerSearch">Search for a customer:</label>
+                            <input type="text" id="customerSearch" placeholder="Enter company name or partial name">
+                        </div>
+                        <button onclick="searchCustomers()" style="background-color: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Search Salesforce</button>
+                        <div id="searchResults" style="margin-top: 20px;"></div>
+                    </div>
+                </div>
+
+                <!-- Selected Customer -->
+                <div id="selectedCustomerSection" style="display: none;">
+                    <div style="background-color: #e8f5e8; border: 1px solid #28a745; padding: 15px; border-radius: 5px;">
+                        <h3>Selected Customer</h3>
+                        <div id="selectedCustomerDetails"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="lightbox-footer">
+                <button class="btn btn-secondary" onclick="closeNewRequestLightbox()">Cancel</button>
+                <button class="btn btn-primary" id="proceedBtn" onclick="proceedToForm()" style="display: none;">Proceed to Form</button>
             </div>
         </div>
     </div>
@@ -659,6 +709,230 @@
         function refreshData() {
             loadSubmissions();
             renderSubmissions();
+        }
+
+        // ===== NEW REQUEST WORKFLOW FUNCTIONS =====
+        
+        let sessionToken = null;
+        let selectedCustomer = null;
+        const backendUrl = 'https://s1m-customer-requirements-form.onrender.com';
+
+        // Open new request lightbox
+        function openNewRequestLightbox() {
+            document.getElementById('newRequestLightbox').style.display = 'block';
+            // Check if already authenticated
+            const urlParams = new URLSearchParams(window.location.search);
+            const success = urlParams.get('success');
+            const session = urlParams.get('session');
+            
+            if (success === 'true' && session) {
+                sessionToken = session;
+                showMessage('authResult', 'Successfully connected to Salesforce!', 'success');
+                document.getElementById('searchSection').style.display = 'block';
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
+
+        // Close new request lightbox
+        function closeNewRequestLightbox() {
+            document.getElementById('newRequestLightbox').style.display = 'none';
+            // Reset form state
+            document.getElementById('searchSection').style.display = 'none';
+            document.getElementById('selectedCustomerSection').style.display = 'none';
+            document.getElementById('proceedBtn').style.display = 'none';
+            sessionToken = null;
+            selectedCustomer = null;
+        }
+
+        // Authenticate with Salesforce
+        async function authenticateSalesforce() {
+            const salesforceUrl = document.getElementById('salesforceUrl').value;
+            
+            if (!salesforceUrl) {
+                showMessage('authResult', 'Please enter your Salesforce URL', 'error');
+                return;
+            }
+
+            try {
+                showMessage('authResult', 'Starting authentication...', 'loading');
+
+                const response = await fetch(`${backendUrl}/api/auth/start`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        salesforceUrl,
+                        redirectPage: 'admin.html'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Backend error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                // Redirect to Salesforce
+                window.location.href = data.authUrl;
+                
+            } catch (error) {
+                console.error('Authentication error:', error);
+                showMessage('authResult', `Authentication failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Search customers
+        async function searchCustomers() {
+            const searchTerm = document.getElementById('customerSearch').value;
+            
+            if (!searchTerm) {
+                showMessage('searchResults', 'Please enter a search term', 'error');
+                return;
+            }
+
+            if (!sessionToken) {
+                showMessage('searchResults', 'Please authenticate with Salesforce first', 'error');
+                return;
+            }
+
+            try {
+                showMessage('searchResults', 'Searching Salesforce...', 'loading');
+
+                const response = await fetch(`${backendUrl}/api/customers/search?q=${encodeURIComponent(searchTerm)}&session=${sessionToken}`);
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        showMessage('searchResults', 'Session expired. Please reconnect to Salesforce.', 'error');
+                        sessionToken = null;
+                        document.getElementById('searchSection').style.display = 'none';
+                        return;
+                    }
+                    throw new Error(`Search failed: ${response.status}`);
+                }
+
+                const data = await response.json();
+                displaySearchResults(data.customers);
+                
+            } catch (error) {
+                console.error('Search error:', error);
+                showMessage('searchResults', `Search failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Display search results
+        function displaySearchResults(customers) {
+            const resultsDiv = document.getElementById('searchResults');
+            
+            if (!customers || customers.length === 0) {
+                resultsDiv.innerHTML = '<div style="color: #dc3545; padding: 10px; border-radius: 4px; background-color: #f8d7da;">No customers found matching your search term.</div>';
+                return;
+            }
+
+            let html = `<h4>Found ${customers.length} customer(s):</h4>`;
+            
+            customers.forEach(customer => {
+                html += `
+                    <div style="border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 5px; background-color: white; cursor: pointer;" onclick="selectCustomer('${customer.id}')">
+                        <h4 style="margin: 0 0 10px 0; color: #007bff;">${customer.name}</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div><strong>Type:</strong> ${customer.type || 'Not specified'}</div>
+                            <div><strong>Phone:</strong> ${customer.phone || 'Not provided'}</div>
+                            <div><strong>Website:</strong> ${customer.website || 'Not provided'}</div>
+                            <div><strong>Location:</strong> ${customer.city || ''}, ${customer.state || ''}</div>
+                        </div>
+                        <button style="background-color: #007bff; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;" onclick="event.stopPropagation(); selectCustomer('${customer.id}')">
+                            Select This Customer
+                        </button>
+                    </div>
+                `;
+            });
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        // Select a customer
+        async function selectCustomer(customerId) {
+            try {
+                showMessage('selectedCustomerDetails', 'Loading customer details...', 'loading');
+                
+                const response = await fetch(`${backendUrl}/api/customers/${customerId}?session=${sessionToken}`);
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to get customer details: ${response.status}`);
+                }
+
+                const data = await response.json();
+                selectedCustomer = data.customer;
+                
+                displaySelectedCustomer(selectedCustomer);
+                document.getElementById('selectedCustomerSection').style.display = 'block';
+                document.getElementById('proceedBtn').style.display = 'inline-block';
+                
+            } catch (error) {
+                console.error('Customer selection error:', error);
+                showMessage('selectedCustomerDetails', `Failed to load customer: ${error.message}`, 'error');
+            }
+        }
+
+        // Display selected customer
+        function displaySelectedCustomer(customer) {
+            const detailsDiv = document.getElementById('selectedCustomerDetails');
+            
+            const html = `
+                <div style="background-color: white; padding: 15px; border-radius: 5px;">
+                    <h4 style="margin: 0 0 15px 0; color: #007bff;">${customer.name}</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div><strong>Type:</strong> ${customer.type || 'Not specified'}</div>
+                        <div><strong>Industry:</strong> ${customer.industry || 'Not specified'}</div>
+                        <div><strong>Phone:</strong> ${customer.phone || 'Not provided'}</div>
+                        <div><strong>Email:</strong> ${customer.email || 'Not provided'}</div>
+                        <div><strong>Website:</strong> ${customer.website || 'Not provided'}</div>
+                        <div><strong>Employees:</strong> ${customer.employeeCount || 'Not specified'}</div>
+                        <div><strong>City:</strong> ${customer.city || 'Not provided'}</div>
+                        <div><strong>State:</strong> ${customer.state || 'Not provided'}</div>
+                    </div>
+                    <p style="margin-top: 10px;"><strong>Salesforce ID:</strong> ${customer.id}</p>
+                </div>
+            `;
+            
+            detailsDiv.innerHTML = html;
+        }
+
+        // Proceed to form with selected customer
+        function proceedToForm() {
+            if (!selectedCustomer) return;
+            
+            // Store selected customer data
+            localStorage.setItem('selectedSalesforceCustomer', JSON.stringify({
+                id: selectedCustomer.id,
+                name: selectedCustomer.name,
+                type: selectedCustomer.type,
+                phone: selectedCustomer.phone,
+                email: selectedCustomer.email,
+                website: selectedCustomer.website,
+                city: selectedCustomer.city,
+                state: selectedCustomer.state,
+                country: selectedCustomer.country,
+                industry: selectedCustomer.industry,
+                selectedAt: new Date().toISOString(),
+                source: 'admin_console' // Track that this came from admin
+            }));
+            
+            // Navigate to main form
+            window.location.href = 'index.html';
+        }
+
+        // Utility function to show messages
+        function showMessage(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            let className = '';
+            switch(type) {
+                case 'error': className = 'color: #dc3545; background-color: #f8d7da; padding: 10px; border-radius: 4px;'; break;
+                case 'success': className = 'color: #155724; background-color: #d4edda; padding: 10px; border-radius: 4px;'; break;
+                case 'loading': className = 'color: #007bff; font-style: italic;'; break;
+            }
+            element.innerHTML = `<div style="${className}">${message}</div>`;
         }
 
         // Initialize on page load

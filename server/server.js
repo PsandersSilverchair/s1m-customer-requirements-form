@@ -68,7 +68,7 @@ app.get('/health', (req, res) => {
 // Start OAuth flow
 app.post('/api/auth/start', (req, res) => {
     try {
-        const { salesforceUrl } = req.body;
+        const { salesforceUrl, redirectPage } = req.body;
         
         if (!salesforceUrl) {
             return res.status(400).json({ error: 'Salesforce URL is required' });
@@ -83,6 +83,7 @@ app.post('/api/auth/start', (req, res) => {
         tokenStore.set(state, {
             codeVerifier,
             salesforceUrl,
+            redirectPage: redirectPage || 'salesforce-integration.html',
             timestamp: Date.now()
         });
 
@@ -157,14 +158,16 @@ app.get('/api/auth/callback', async (req, res) => {
         });
 
         // Redirect to frontend with session token
-        const frontendUrl = new URL('/s1m-customer-requirements-form/salesforce-integration.html', process.env.FRONTEND_URL);
+        const redirectPage = stateData.redirectPage || 'salesforce-integration.html';
+        const frontendUrl = new URL(`/s1m-customer-requirements-form/${redirectPage}`, process.env.FRONTEND_URL);
         frontendUrl.searchParams.append('session', sessionToken);
         frontendUrl.searchParams.append('success', 'true');
 
         res.redirect(frontendUrl.toString());
     } catch (error) {
         console.error('Auth callback error:', error);
-        const frontendUrl = new URL('/s1m-customer-requirements-form/salesforce-integration.html', process.env.FRONTEND_URL);
+        const redirectPage = stateData?.redirectPage || 'salesforce-integration.html';
+        const frontendUrl = new URL(`/s1m-customer-requirements-form/${redirectPage}`, process.env.FRONTEND_URL);
         frontendUrl.searchParams.append('error', 'auth_failed');
         res.redirect(frontendUrl.toString());
     }
