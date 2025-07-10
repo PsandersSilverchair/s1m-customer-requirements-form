@@ -996,9 +996,9 @@
                 return;
             }
             
-            // Auto-attempt Salesforce authentication
-            showMessage('authResult', 'Connecting to Salesforce...', 'loading');
-            autoAuthenticate();
+            // Show manual authentication section
+            showMessage('authResult', 'Please connect to Salesforce to search for customers.', 'info');
+            document.getElementById('authSection').style.display = 'block';
         }
 
         // Show search section and hide auth
@@ -1215,8 +1215,8 @@
 
         // Manual reconnection function
         function manualReconnect() {
-            showMessage('authResult', 'Connecting to Salesforce...', 'loading');
-            autoAuthenticate();
+            showMessage('authResult', 'Please connect to Salesforce manually.', 'info');
+            document.getElementById('authSection').style.display = 'block';
         }
 
         // Restart the entire workflow
