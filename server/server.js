@@ -158,7 +158,7 @@ app.get('/api/auth/callback', async (req, res) => {
         });
 
         // Redirect to frontend with session token
-        const redirectPage = stateData.redirectPage || 'salesforce-integration.html';
+        const redirectPage = storedData.redirectPage || 'salesforce-integration.html';
         const frontendUrl = new URL(`/s1m-customer-requirements-form/${redirectPage}`, process.env.FRONTEND_URL);
         frontendUrl.searchParams.append('session', sessionToken);
         frontendUrl.searchParams.append('success', 'true');
@@ -166,7 +166,8 @@ app.get('/api/auth/callback', async (req, res) => {
         res.redirect(frontendUrl.toString());
     } catch (error) {
         console.error('Auth callback error:', error);
-        const redirectPage = stateData?.redirectPage || 'salesforce-integration.html';
+        // Try to get redirect page from query params or default
+        const redirectPage = 'salesforce-integration.html';
         const frontendUrl = new URL(`/s1m-customer-requirements-form/${redirectPage}`, process.env.FRONTEND_URL);
         frontendUrl.searchParams.append('error', 'auth_failed');
         res.redirect(frontendUrl.toString());
