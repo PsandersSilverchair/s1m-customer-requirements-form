@@ -530,12 +530,10 @@
         
         // Check if we're returning from authentication
         function checkAuthReturn() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const success = urlParams.get('success');
-            const session = urlParams.get('session');
             const authReturn = localStorage.getItem('auth_return_state');
+            const storedSession = localStorage.getItem('salesforce_session_token');
             
-            if (success === 'true' && session && authReturn === 'admin_console') {
+            if (authReturn === 'admin_console' && storedSession) {
                 // Clean up the return state
                 localStorage.removeItem('auth_return_state');
                 
@@ -1091,45 +1089,12 @@
         }
 
         // Authenticate with Salesforce
-        async function authenticateSalesforce() {
-            const salesforceUrl = document.getElementById('salesforceUrl').value;
+        function authenticateSalesforce() {
+            // Store state to return to admin console after auth
+            localStorage.setItem('auth_return_state', 'admin_console');
             
-            if (!salesforceUrl) {
-                showMessage('authResult', 'Please enter your Salesforce URL', 'error');
-                return;
-            }
-
-            try {
-                showMessage('authResult', 'Starting authentication...', 'loading');
-
-                const response = await fetch(`${backendUrl}/api/auth/start`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ 
-                        salesforceUrl,
-                        redirectPage: 'admin.html'
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Backend error: ${response.status}`);
-                }
-
-                const data = await response.json();
-                
-                // Store current page state and redirect to Salesforce (will return to callback)
-                localStorage.setItem('auth_return_state', 'admin_console');
-                showMessage('authResult', 'Redirecting to Salesforce...', 'loading');
-                
-                // Use window location redirect instead of popup to avoid security warnings
-                window.location.href = data.authUrl;
-                
-            } catch (error) {
-                console.error('Authentication error:', error);
-                showMessage('authResult', `Authentication failed: ${error.message}`, 'error');
-            }
+            // Redirect to dedicated authentication page
+            window.location.href = 'auth.html';
         }
 
         // Search customers
