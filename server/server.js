@@ -223,7 +223,7 @@ app.get('/api/customers/search', async (req, res) => {
         }
 
         // Build SOSL query
-        const soqlQuery = `FIND {${searchTerm}*} IN NAME FIELDS RETURNING Account(Id, Name, Type, Phone, Website, BillingCity, BillingState, BillingCountry) LIMIT 10`;
+        const soqlQuery = `FIND {${searchTerm}*} IN NAME FIELDS RETURNING Account(Id, Name, Type, Phone, Website, BillingCity, BillingState, BillingCountry) LIMIT 25`;
 
         // Make API call to Salesforce
         const response = await axios.get(
