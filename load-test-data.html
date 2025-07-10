@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Load Test Data - S1M Admin</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        .success {
+            color: #28a745;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .info {
+            color: #666;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test Data Loader</h1>
+        <p class="info">This tool will populate your admin console with 20 realistic test submissions from different customers.</p>
+        
+        <div id="status"></div>
+        
+        <button class="btn" onclick="loadTestData()">Load 20 Test Submissions</button>
+        <button class="btn btn-danger" onclick="clearAllData()">Clear All Data</button>
+        
+        <div style="margin-top: 30px;">
+            <a href="admin.html" style="color: #007bff; text-decoration: none;">→ Go to Admin Console</a>
+        </div>
+    </div>
+
+    <script src="populate-test-data.js"></script>
+    <script>
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            const className = type === 'success' ? 'success' : 'info';
+            statusDiv.innerHTML = `<div class="${className}">${message}</div>`;
+        }
+
+        function loadTestData() {
+            try {
+                // Get existing submissions
+                const existing = JSON.parse(localStorage.getItem('s1m_submissions') || '[]');
+                
+                // Check if test data already exists
+                const hasTestData = existing.some(sub => sub.customerData && sub.customerData.source === 'admin_console');
+                
+                if (hasTestData) {
+                    if (!confirm('Test data already exists. Add more test submissions anyway?')) {
+                        return;
+                    }
+                }
+                
+                // Add test submissions (testSubmissions is loaded from the script)
+                const combined = [...existing, ...testSubmissions];
+                
+                // Save to localStorage
+                localStorage.setItem('s1m_submissions', JSON.stringify(combined));
+                
+                showStatus(`✅ Successfully added ${testSubmissions.length} test submissions! Total: ${combined.length}`, 'success');
+                
+            } catch (error) {
+                showStatus(`❌ Error loading test data: ${error.message}`, 'error');
+            }
+        }
+
+        function clearAllData() {
+            if (confirm('Are you sure you want to clear ALL submission data? This cannot be undone.')) {
+                localStorage.removeItem('s1m_submissions');
+                showStatus('✅ All submission data cleared!', 'success');
+            }
+        }
+
+        // Show current data count on load
+        window.addEventListener('load', () => {
+            const existing = JSON.parse(localStorage.getItem('s1m_submissions') || '[]');
+            showStatus(`Current submissions in database: ${existing.length}`);
+        });
+    </script>
+</body>
+</html>
